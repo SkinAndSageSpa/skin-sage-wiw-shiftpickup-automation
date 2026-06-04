@@ -87,9 +87,11 @@ async function getShift(shiftId) {
   return data.shift;
 }
 
-// Returns approved swaps updated within the lookback window.
+// Returns completed swaps/drops updated within the lookback window.
+// status=3 is auto-completed on this account (manager review is disabled),
+// which covers both one-sided drops and two-sided swaps.
 async function getRecentApprovedSwaps() {
-  const data  = await apiGet(`/swaps?status=2&start=${todayKey()}&end=${futureKey(60)}`);
+  const data  = await apiGet(`/swaps?status=3&start=${todayKey()}&end=${futureKey(60)}`);
   const swaps = data.swaps || [];
   return swaps.filter(s => isRecent(s.updated_at || s.created_at));
 }
