@@ -1,0 +1,69 @@
+name: WIW Diagnostic
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query WIW directly
+        env:
+          WIW_API_KEY:  ${{ secrets.WIW_API_KEY }}
+          WIW_EMAIL:    ${{ secrets.WIW_EMAIL }}
+          WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
+        run: |
+          node << 'SCRIPT'
+          const LOGIN_URL = 'https://api.login.wheniwork.com/login';
+          const API = 'https://api.wheniwork.com/2';
+
+          async function main() {
+            // Login
+            const loginRes = await fetch(LOGIN_URL, {
+              method: 'POST',
+              headers: { 'W-Key': process.env.WIW_API_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: process.env.WIW_EMAIL, password: process.env.WIW_PASSWORD }),
+            });
+            const loginData = await loginRes.json();
+            const token = loginData.token || loginData.session_token;
+            console.log('Login OK, token acquired:', !!token);
+
+            const headers = { 'W-Token': token, 'Content-Type': 'application/json' };
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            const future = new Date(Date.now() + 60*86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            const past   = new Date(Date.now() - 30*86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+
+            console.log(`\n=== DATE RANGE: past=${past}, today=${today}, future=${future} ===\n`);
+
+            // 1. Swaps — all statuses, past 30 days to future 60 days
+            for (const status of [0, 1, 2, 3, 4]) {
+              const r = await fetch(`${API}/swaps?status=${status}&start=${past}&end=${future}`, { headers });
+              const d = await r.json();
+              console.log(`Swaps status=${status}: ${(d.swaps||[]).length} result(s)`);
+              (d.swaps||[]).slice(0,3).forEach(s =>
+                console.log(`  id=${s.id} shift_id=${s.shift_id} created=${s.created_at} updated=${s.updated_at}`)
+              );
+            }
+
+            // 2. Open shifts — past 30 days to future 60 days, location 5837840
+            const osr = await fetch(`${API}/shifts?start=${past}&end=${future}&location_id=5837840`, { headers });
+            const osd = await osr.json();
+            const openPickups = (osd.shifts||[]).filter(s => s.openshift_approval_request_id > 0);
+            console.log(`\nShifts with openshift_approval_request_id>0: ${openPickups.length}`);
+            openPickups.slice(0,5).forEach(s =>
+              console.log(`  id=${s.id} user_id=${s.user_id} start=${s.start_time} updated=${s.updated_at} osar_id=${s.openshift_approval_request_id}`)
+            );
+
+            // 3. Open shifts (unassigned) at location
+            const unassigned = (osd.shifts||[]).filter(s => !s.user_id || s.user_id === 0);
+            console.log(`\nUnassigned open shifts: ${unassigned.length}`);
+            unassigned.slice(0,5).forEach(s =>
+              console.log(`  id=${s.id} start=${s.start_time}`)
+            );
+
+            console.log(`\nTotal shifts returned: ${(osd.shifts||[]).length}`);
+          }
+
+          main().catch(e => { console.error(e); process.exit(1); });
+          SCRIPT
