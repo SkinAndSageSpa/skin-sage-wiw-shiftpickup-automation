@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Query WIW directly
+      - name: Query WIW - all 3 pickup scenarios
         env:
           WIW_API_KEY:  ${{ secrets.WIW_API_KEY }}
           WIW_EMAIL:    ${{ secrets.WIW_EMAIL }}
@@ -17,9 +17,10 @@ jobs:
           node << 'SCRIPT'
           const LOGIN_URL = 'https://api.login.wheniwork.com/login';
           const API = 'https://api.wheniwork.com/2';
+          const TZ = 'America/Los_Angeles';
+          const LOC = 5837840;
 
           async function main() {
-            // Login
             const loginRes = await fetch(LOGIN_URL, {
               method: 'POST',
               headers: { 'W-Key': process.env.WIW_API_KEY, 'Content-Type': 'application/json' },
@@ -27,42 +28,96 @@ jobs:
             });
             const loginData = await loginRes.json();
             const token = loginData.token || loginData.session_token;
-            console.log('Login OK, token acquired:', !!token);
+            if (!token) { console.error('Login failed', loginData); process.exit(1); }
+            console.log('Login OK\n');
 
             const headers = { 'W-Token': token, 'Content-Type': 'application/json' };
-            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-            const future = new Date(Date.now() + 60*86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-            const past   = new Date(Date.now() - 30*86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-
-            console.log(`\n=== DATE RANGE: past=${past}, today=${today}, future=${future} ===\n`);
-
-            // 1. Swaps — all statuses, past 30 days to future 60 days
-            for (const status of [0, 1, 2, 3, 4]) {
-              const r = await fetch(`${API}/swaps?status=${status}&start=${past}&end=${future}`, { headers });
+            const get = async (path) => {
+              const r = await fetch(`${API}${path}`, { headers });
               const d = await r.json();
-              console.log(`Swaps status=${status}: ${(d.swaps||[]).length} result(s)`);
-              (d.swaps||[]).slice(0,3).forEach(s =>
-                console.log(`  id=${s.id} shift_id=${s.shift_id} created=${s.created_at} updated=${s.updated_at}`)
+              if (!r.ok) console.error(`  ERROR ${r.status}:`, JSON.stringify(d));
+              return d;
+            };
+
+            const today  = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+            const past60 = new Date(Date.now() - 60*86400000).toLocaleDateString('en-CA', { timeZone: TZ });
+            const fut60  = new Date(Date.now() + 60*86400000).toLocaleDateString('en-CA', { timeZone: TZ });
+            console.log(`Date window: ${past60} → ${fut60}\n`);
+
+            // ── SCENARIO 1: OPEN SHIFTS ──────────────────────────────────────
+            console.log('=== SCENARIO 1: OPEN SHIFT PICKUPS ===');
+            const shiftsData = await get(`/shifts?start=${past60}&end=${fut60}&location_id=${LOC}`);
+            const shifts = shiftsData.shifts || [];
+            console.log(`Total shifts at location: ${shifts.length}`);
+
+            const withOsar = shifts.filter(s => s.openshift_approval_request_id > 0);
+            console.log(`  openshift_approval_request_id > 0 (picked-up open shifts): ${withOsar.length}`);
+            withOsar.forEach(s =>
+              console.log(`    id=${s.id} user_id=${s.user_id} start=${s.start_time} updated=${s.updated_at} osar_id=${s.openshift_approval_request_id}`)
+            );
+
+            const unassigned = shifts.filter(s => !s.user_id || s.user_id === 0);
+            console.log(`  Unassigned open shifts still available: ${unassigned.length}`);
+            unassigned.slice(0,5).forEach(s =>
+              console.log(`    id=${s.id} start=${s.start_time}`)
+            );
+
+            // Try the /openshifts endpoint directly
+            const osData = await get(`/openshifts?start=${past60}&end=${fut60}&location_id=${LOC}`);
+            const openShiftRequests = osData.openshifts || osData.open_shifts || [];
+            console.log(`\n  /openshifts endpoint: ${openShiftRequests.length} result(s)`);
+            openShiftRequests.slice(0,5).forEach(s =>
+              console.log(`    id=${s.id} status=${s.status} user_id=${s.user_id} shift_id=${s.shift_id} created=${s.created_at} updated=${s.updated_at}`)
+            );
+
+            // ── SCENARIO 2: SHIFT DROPS ──────────────────────────────────────
+            console.log('\n=== SCENARIO 2: SHIFT DROPS ===');
+
+            // Try /requests endpoint (shift drop requests live here in some WIW configs)
+            for (const type of [4, 5, 6, 7, 8]) {
+              const reqData = await get(`/requests?start=${past60}&end=${fut60}&type=${type}&location_id=${LOC}`);
+              const reqs = reqData.requests || [];
+              if (reqs.length > 0) {
+                console.log(`  /requests?type=${type}: ${reqs.length} result(s)`);
+                reqs.slice(0,3).forEach(r =>
+                  console.log(`    id=${r.id} status=${r.status} type=${r.type} user_id=${r.user_id} shift_id=${r.shift_id} created=${r.created_at}`)
+                );
+              } else {
+                console.log(`  /requests?type=${type}: 0`);
+              }
+            }
+
+            // Also try /requests with no type filter
+            const allReqData = await get(`/requests?start=${past60}&end=${fut60}&location_id=${LOC}`);
+            const allReqs = allReqData.requests || [];
+            console.log(`\n  /requests (no type filter): ${allReqs.length} result(s)`);
+            const byType = {};
+            allReqs.forEach(r => { byType[r.type] = (byType[r.type]||0) + 1; });
+            console.log('  Breakdown by type:', JSON.stringify(byType));
+            const byStatus = {};
+            allReqs.forEach(r => { byStatus[r.status] = (byStatus[r.status]||0) + 1; });
+            console.log('  Breakdown by status:', JSON.stringify(byStatus));
+            allReqs.slice(0,5).forEach(r =>
+              console.log(`    id=${r.id} type=${r.type} status=${r.status} user_id=${r.user_id} shift_id=${r.shift_id} created=${r.created_at}`)
+            );
+
+            // ── SCENARIO 3: SWAPS ────────────────────────────────────────────
+            console.log('\n=== SCENARIO 3: SWAPS ===');
+            for (const status of [0, 1, 2, 3, 4]) {
+              const swapData = await get(`/swaps?status=${status}&start=${past60}&end=${fut60}`);
+              const swaps = swapData.swaps || [];
+              console.log(`  status=${status}: ${swaps.length}`);
+              swaps.slice(0,3).forEach(s =>
+                console.log(`    id=${s.id} shift_id=${s.shift_id} creator_id=${s.creator_id} user_id=${s.user_id} created=${s.created_at} updated=${s.updated_at}`)
               );
             }
 
-            // 2. Open shifts — past 30 days to future 60 days, location 5837840
-            const osr = await fetch(`${API}/shifts?start=${past}&end=${future}&location_id=5837840`, { headers });
-            const osd = await osr.json();
-            const openPickups = (osd.shifts||[]).filter(s => s.openshift_approval_request_id > 0);
-            console.log(`\nShifts with openshift_approval_request_id>0: ${openPickups.length}`);
-            openPickups.slice(0,5).forEach(s =>
-              console.log(`  id=${s.id} user_id=${s.user_id} start=${s.start_time} updated=${s.updated_at} osar_id=${s.openshift_approval_request_id}`)
-            );
-
-            // 3. Open shifts (unassigned) at location
-            const unassigned = (osd.shifts||[]).filter(s => !s.user_id || s.user_id === 0);
-            console.log(`\nUnassigned open shifts: ${unassigned.length}`);
-            unassigned.slice(0,5).forEach(s =>
-              console.log(`  id=${s.id} start=${s.start_time}`)
-            );
-
-            console.log(`\nTotal shifts returned: ${(osd.shifts||[]).length}`);
+            // Also check swaps with no status filter
+            const allSwaps = await get(`/swaps?start=${past60}&end=${fut60}`);
+            console.log(`\n  /swaps (no status filter): ${(allSwaps.swaps||[]).length} total`);
+            const swapByStatus = {};
+            (allSwaps.swaps||[]).forEach(s => { swapByStatus[s.status] = (swapByStatus[s.status]||0) + 1; });
+            console.log('  Breakdown by status:', JSON.stringify(swapByStatus));
           }
 
           main().catch(e => { console.error(e); process.exit(1); });
