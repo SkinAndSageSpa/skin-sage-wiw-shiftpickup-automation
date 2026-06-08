@@ -123,10 +123,12 @@ async function createOpenShiftTask({
   }
 
   const steps = [
-    `1. Adjust ${provider.name}'s schedule in Mangomint to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
+    `1. Login to Skin & Sage Mangomint.`,
+    `2. Apps --> Staff --> ${provider.name} --> Work Hours.`,
+    `3. Adjust ${provider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
   ];
   if (isBackToBack) {
-    steps.push(`2. ${provider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
+    steps.push(`4. ${provider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
   }
 
   return createTask({
