@@ -10,6 +10,8 @@ jobs:
   process-shift-pickups:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write  # required to read/write the open-shifts snapshot file
 
     steps:
       - name: Checkout repository
@@ -30,4 +32,5 @@ jobs:
           WIW_PASSWORD:       ${{ secrets.WIW_PASSWORD }}
           ASANA_ACCESS_TOKEN: ${{ secrets.ASANA_ACCESS_TOKEN }}
           ASANA_PROJECT_GID:  ${{ secrets.ASANA_PROJECT_GID }}
+          GITHUB_TOKEN:       ${{ github.token }}
         run: node src/handler.js
