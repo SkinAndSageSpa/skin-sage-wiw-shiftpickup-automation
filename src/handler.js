@@ -4,8 +4,9 @@
  * Fetches recent WIW shift pickups and creates Asana tasks for each one.
  */
 
-const wiw = require('./wiwClient');
+const wiw                        = require('./wiwClient');
 const { createDroppedShiftTask, createOpenShiftTask } = require('./asanaClient');
+const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
 
 async function processDroppedShift(swap, userCache) {
   const pickingUserId  = swap.user_id;
@@ -110,14 +111,28 @@ async function main() {
     catch (err) { console.error(`  Swap ${swap.id}: ERROR - ${err.message}`); }
   }
 
-  // --- Open shift pickups ---
-  // Identified by openshift_approval_request_id > 0 on recently updated shifts.
-  const openPickups = await wiw.getRecentOpenShiftPickups();
-  console.log(`Found ${openPickups.length} recent open shift pickup(s).`);
-  for (const shift of openPickups) {
+  // --- Open shift pickups (snapshot diff) ---
+  // Load the previous snapshot of unassigned shifts, then compare to current
+  // state. Any shift that was unassigned last run and is now assigned was picked up.
+  // We don't rely on openshift_approval_request_id because this account auto-assigns
+  // without creating an approval request record.
+  const snapshot       = await loadSnapshot();
+  const allShifts      = await wiw.getLocationShifts();
+  const nowUnassigned  = allShifts.filter(s => !s.user_id || s.user_id === 0);
+  const pickedUp       = snapshot.capturedAt
+    ? allShifts.filter(s => s.user_id && s.user_id !== 0 && snapshot.unassignedIds.has(s.id))
+    : [];
+
+  console.log(`Snapshot from: ${snapshot.capturedAt || 'none'} — ${snapshot.unassignedIds.size} previously unassigned.`);
+  console.log(`Found ${pickedUp.length} open shift pickup(s).`);
+
+  for (const shift of pickedUp) {
     try { await processOpenShiftPickup(shift, userCache); }
     catch (err) { console.error(`  Shift ${shift.id}: ERROR - ${err.message}`); }
   }
+
+  await saveSnapshot(nowUnassigned, snapshot.sha);
+  console.log(`Snapshot updated: ${nowUnassigned.length} unassigned shifts saved.`);
 
   console.log('Done.');
 }
