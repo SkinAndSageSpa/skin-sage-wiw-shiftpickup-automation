@@ -1,0 +1,43 @@
+name: WIW Quick Check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check Priscilla June 22 shift
+        env:
+          WIW_API_KEY:  ${{ secrets.WIW_API_KEY }}
+          WIW_EMAIL:    ${{ secrets.WIW_EMAIL }}
+          WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
+        run: |
+          node << 'SCRIPT'
+          const LOGIN_URL = 'https://api.login.wheniwork.com/login';
+          const API = 'https://api.wheniwork.com/2';
+          const LOC = 5837840;
+          const PRISCILLA_ID = 52119785;
+          async function main() {
+            const lr = await fetch(LOGIN_URL, {
+              method: 'POST',
+              headers: { 'W-Key': process.env.WIW_API_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: process.env.WIW_EMAIL, password: process.env.WIW_PASSWORD }),
+            });
+            const { token } = await lr.json();
+            const h = { 'W-Token': token, 'Content-Type': 'application/json' };
+            const r1 = await fetch(`${API}/shifts?start=2026-06-22&end=2026-06-22&user_id=${PRISCILLA_ID}&location_id=${LOC}`, { headers: h });
+            const d1 = await r1.json();
+            console.log('Priscilla June 22 shifts:', (d1.shifts||[]).length);
+            (d1.shifts||[]).forEach(s => console.log(`  id=${s.id} start=${s.start_time} osar_id=${s.openshift_approval_request_id} updated=${s.updated_at} created=${s.created_at}`));
+            const r2 = await fetch(`${API}/shifts?start=2026-06-08&end=2026-08-08&location_id=${LOC}`, { headers: h });
+            const d2 = await r2.json();
+            const withOsar = (d2.shifts||[]).filter(s => s.openshift_approval_request_id > 0);
+            console.log('All osar_id>0 shifts (next 60d):', withOsar.length);
+            const cutoff = new Date(Date.now() - 90*60*1000);
+            withOsar.forEach(s => {
+              const recent = new Date(s.updated_at) >= cutoff;
+              console.log(`  id=${s.id} user_id=${s.user_id} start=${s.start_time} osar_id=${s.openshift_approval_request_id} updated=${s.updated_at} RECENT=${recent}`);
+            });
+          }
+          main().catch(e => { console.error(e); process.exit(1); });
+          SCRIPT
