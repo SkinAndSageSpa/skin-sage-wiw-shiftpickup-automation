@@ -96,17 +96,11 @@ async function getRecentApprovedSwaps() {
   return swaps.filter(s => isRecent(s.updated_at || s.created_at));
 }
 
-// Returns open shift pickups: shifts recently updated that were originally
-// open shifts (openshift_approval_request_id > 0) and are now assigned.
-async function getRecentOpenShiftPickups() {
-  const data   = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&location_id=${PROVIDER_LOCATION_ID}`);
-  const shifts = data.shifts || [];
-  return shifts.filter(s =>
-    s.user_id &&
-    s.user_id !== 0 &&
-    s.openshift_approval_request_id > 0 &&
-    isRecent(s.updated_at)
-  );
+// Returns all shifts at the provider location for today through 60 days out.
+// Used by handler.js to diff against the previous snapshot for open shift detection.
+async function getLocationShifts() {
+  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&location_id=${PROVIDER_LOCATION_ID}`);
+  return data.shifts || [];
 }
 
 // Returns all assigned shifts for a user on a given YYYY-MM-DD date.
@@ -156,7 +150,7 @@ function shiftHours(shift) {
 
 module.exports = {
   login, getUser, getShift, getUserShiftsOnDate,
-  getRecentApprovedSwaps, getRecentOpenShiftPickups,
+  getRecentApprovedSwaps, getLocationShifts,
   isProvider, positionLabel,
   shiftDateKey, formatShiftDate, formatShiftTime, shiftHours,
   POSITION_ESTI, POSITION_LMT, PROVIDER_POSITION_IDS, PROVIDER_LOCATION_ID,
