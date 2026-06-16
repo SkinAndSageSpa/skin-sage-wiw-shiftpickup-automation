@@ -30,24 +30,47 @@ function getDevKey() {
   return k;
 }
 
+// WIW's login endpoint occasionally returns a raw WAF/edge 403 (not a JSON
+// error from the app itself) for no account-related reason — seen twice in
+// production, both times the very next scheduled run succeeded with no
+// changes. Retry a few times with backoff before giving up.
+const LOGIN_RETRIES = 3;
+const LOGIN_RETRY_DELAY_MS = 5000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function login() {
   if (_token) return _token;
   const email    = process.env.WIW_EMAIL;
   const password = process.env.WIW_PASSWORD;
   if (!email || !password) throw new Error('WIW_EMAIL and WIW_PASSWORD env vars required');
 
-  const res = await fetch(LOGIN_URL, {
-    method: 'POST',
-    headers: { 'W-Key': getDevKey(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) throw new Error(`WIW login failed: HTTP ${res.status} ${await res.text()}`);
-  const data = await res.json();
-  // Login response uses "person" key (not "user") and token is at the top level.
-  const token = data.token || data.session_token || data?.person?.token || data?.user?.token;
-  if (!token) throw new Error('WIW login OK but no token in response');
-  _token = token;
-  return _token;
+  let lastErr;
+  for (let attempt = 1; attempt <= LOGIN_RETRIES; attempt++) {
+    try {
+      const res = await fetch(LOGIN_URL, {
+        method: 'POST',
+        headers: { 'W-Key': getDevKey(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) throw new Error(`WIW login failed: HTTP ${res.status} ${await res.text()}`);
+      const data = await res.json();
+      // Login response uses "person" key (not "user") and token is at the top level.
+      const token = data.token || data.session_token || data?.person?.token || data?.user?.token;
+      if (!token) throw new Error('WIW login OK but no token in response');
+      _token = token;
+      return _token;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < LOGIN_RETRIES) {
+        console.error(`Login attempt ${attempt} failed: ${err.message}. Retrying in ${LOGIN_RETRY_DELAY_MS}ms...`);
+        await sleep(LOGIN_RETRY_DELAY_MS);
+      }
+    }
+  }
+  throw lastErr;
 }
 
 function authHeaders() {
