@@ -5,7 +5,7 @@
  */
 
 const wiw                        = require('./wiwClient');
-const { createDroppedShiftTask, createOpenShiftTask } = require('./asanaClient');
+const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask } = require('./asanaClient');
 const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
 
 async function processDroppedShift(swap, userCache) {
@@ -37,22 +37,38 @@ async function processDroppedShift(swap, userCache) {
   const shiftDisplay = `${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}`;
   const hours        = wiw.shiftHours(shift);
 
-  const droppingShiftsToday       = await wiw.getUserShiftsOnDate(droppingUserId, shiftDate);
+  const [droppingShiftsToday, pickingShiftsToday] = await Promise.all([
+    wiw.getUserShiftsOnDate(droppingUserId, shiftDate),
+    wiw.getUserShiftsOnDate(pickingUserId,  shiftDate),
+  ]);
   const droppingHasRemainingShift = droppingShiftsToday.length > 0;
+  const pickingIsBackToBack       = pickingShiftsToday.length >= 2;
 
   console.log(`  Swap ${swap.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} (${hours} hrs)`);
 
-  const task = await createDroppedShiftTask({
-    droppingProvider: { name: droppingName, position: droppingPosition },
-    pickingProvider:  { name: pickingName,  position: pickingPosition  },
-    shiftDate,
-    shiftDisplay,
-    shiftHours: hours,
-    droppingHasRemainingShift,
-    now: new Date(),
-  });
+  const [closeTask, openTask] = await Promise.all([
+    createDroppedShiftTask({
+      droppingProvider: { name: droppingName, position: droppingPosition },
+      pickingProvider:  { name: pickingName,  position: pickingPosition  },
+      shiftDate,
+      shiftDisplay,
+      shiftHours: hours,
+      droppingHasRemainingShift,
+      now: new Date(),
+    }),
+    createDropPickupTask({
+      pickingProvider:  { name: pickingName,  position: pickingPosition  },
+      droppingProvider: { name: droppingName, position: droppingPosition },
+      shiftDate,
+      shiftDisplay,
+      shiftHours: hours,
+      isBackToBack: pickingIsBackToBack,
+      now: new Date(),
+    }),
+  ]);
 
-  if (task) console.log(`    Asana task: ${task?.data?.permalink_url || '(no url)'}`);
+  if (closeTask) console.log(`    Close-books task: ${closeTask?.data?.permalink_url || '(no url)'}`);
+  if (openTask)  console.log(`    Open-books task:  ${openTask?.data?.permalink_url  || '(no url)'}`);
 }
 
 async function processOpenShiftPickup(shift, userCache) {

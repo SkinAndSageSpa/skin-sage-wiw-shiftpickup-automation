@@ -144,4 +144,49 @@ async function createOpenShiftTask({
   });
 }
 
-module.exports = { createDroppedShiftTask, createOpenShiftTask };
+/**
+ * Dropped shift picked up by another provider — open picker's books.
+ * shiftDate     — YYYY-MM-DD, used in task name
+ * shiftDisplay  — "Sun, 17 May 2026 4:45pm-8:30pm", used in notes
+ */
+async function createDropPickupTask({
+  pickingProvider,
+  droppingProvider,
+  shiftDate,
+  shiftDisplay,
+  shiftHours,
+  isBackToBack,
+  now,
+}) {
+  const name  = `Shift Pickup - Open Books in Mangomint – ${pickingProvider.name} (${shiftDate})`;
+  const today = formatDate(now);
+
+  if (await taskExists(name)) {
+    console.log(`  Skipping (task already exists): ${name}`);
+    return null;
+  }
+
+  const steps = [
+    `1. Login to Skin & Sage Mangomint.`,
+    `2. Apps --> Staff --> ${pickingProvider.name} --> Work Hours.`,
+    `3. Adjust ${pickingProvider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
+  ];
+  if (isBackToBack) {
+    steps.push(`4. ${pickingProvider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
+  }
+
+  return createTask({
+    name,
+    notes: [
+      `Picking Provider:  ${pickingProvider.name} (${pickingProvider.position})`,
+      `Dropping Provider: ${droppingProvider.name} (${droppingProvider.position})`,
+      `Shift Date: ${shiftDisplay} (${shiftHours} hrs)`,
+      '',
+      'Action Required:',
+      ...steps,
+    ].join('\n'),
+    dueDate: today,
+  });
+}
+
+module.exports = { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask };
