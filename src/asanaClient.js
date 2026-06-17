@@ -8,7 +8,7 @@
 const ASANA_BASE_URL = 'https://app.asana.com/api/1.0';
 
 const SPA_OPERATIONS_PROJECT_GID = process.env.ASANA_PROJECT_GID        || '1211852426828244';
-const ASSIGNEE_GID               = process.env.ASANA_ASSIGNEE_GID       || '1211841527818964'; // servicesdirector@skinandsagespa.com (Sofie LaCarrubba)
+const ASSIGNEE_GID               = process.env.ASANA_ASSIGNEE_GID       || '1214912621580962'; // assistant.eldestsister@gmail.com
 const PRIORITY_FIELD_GID         = process.env.ASANA_PRIORITY_FIELD_GID || '1204876556629872';
 const PRIORITY_HIGH_OPTION_GID   = process.env.ASANA_PRIORITY_HIGH_GID  || '1204876556629873';
 
