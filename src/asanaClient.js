@@ -84,9 +84,9 @@ async function createDroppedShiftTask({
     return null;
   }
 
-  const mangomintNote = droppingHasRemainingShift
-    ? `Note: ${droppingProvider.name} still has another shift on ${shiftDate} — adjust hours only, do not mark "Not Working."`
-    : `Note: ${droppingProvider.name} has no other shifts on ${shiftDate} — mark schedule as "Not Working."`;
+  const lastStep = droppingHasRemainingShift
+    ? `4. ${droppingProvider.name} still has another shift on ${shiftDate} — adjust hours only, do not mark "Not Working."`
+    : `4. ${droppingProvider.name} has no other shifts on ${shiftDate} — mark schedule as "Not Working."`;
 
   return createTask({
     name,
@@ -95,7 +95,11 @@ async function createDroppedShiftTask({
       `Picking Provider:  ${pickingProvider.name} (${pickingProvider.position})`,
       `Shift Date: ${shiftDisplay} (${shiftHours} hrs)`,
       '',
-      mangomintNote,
+      'Action Required:',
+      `1. Login to Skin & Sage Mangomint.`,
+      `2. Apps --> Staff --> ${droppingProvider.name} --> Work Hours.`,
+      `3. Remove ${droppingProvider.name}'s shift on ${shiftDate}: ${shiftDisplay} (${shiftHours} hrs).`,
+      lastStep,
     ].join('\n'),
     dueDate: today,
   });
