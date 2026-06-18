@@ -9,18 +9,26 @@ const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask } = re
 const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
 
 async function processDroppedShift(swap, userCache) {
-  const pickingUserId  = swap.user_id;
   const droppingUserId = swap.creator_id;
 
-  if (!pickingUserId || !droppingUserId) {
-    console.log(`  Swap ${swap.id}: missing user IDs, skipping`);
+  if (!droppingUserId) {
+    console.log(`  Swap ${swap.id}: missing creator_id, skipping`);
     return;
   }
 
-  const [pickingUser, droppingUser, shift] = await Promise.all([
+  // On one-sided drops, swap.user_id === creator_id (the dropper). The real picker
+  // is shift.user_id after the swap completes (status=3).
+  const shift = await wiw.getShift(swap.shift_id);
+  const pickingUserId = shift.user_id;
+
+  if (!pickingUserId || pickingUserId === 0 || String(pickingUserId) === String(droppingUserId)) {
+    console.log(`  Swap ${swap.id}: shift not yet reassigned to a different picker, skipping`);
+    return;
+  }
+
+  const [pickingUser, droppingUser] = await Promise.all([
     userCache.get(pickingUserId),
     userCache.get(droppingUserId),
-    wiw.getShift(swap.shift_id),
   ]);
 
   if (!wiw.isProvider(pickingUser)) {
