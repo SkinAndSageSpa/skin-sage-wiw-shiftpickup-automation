@@ -122,13 +122,13 @@ async function getRecentApprovedSwaps() {
 // Returns all shifts at the provider location for today through 60 days out.
 // Used by handler.js to diff against the previous snapshot for open shift detection.
 async function getLocationShifts() {
-  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&location_id=${PROVIDER_LOCATION_ID}`);
+  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&location_id=${PROVIDER_LOCATION_ID}&include_open=true`);
   return data.shifts || [];
 }
 
 // Returns all assigned shifts for a user on a given YYYY-MM-DD date.
 async function getUserShiftsOnDate(userId, date) {
-  const data = await apiGet(`/shifts?start=${date}&end=${date}&user_id=${userId}&location_id=${PROVIDER_LOCATION_ID}`);
+  const data = await apiGet(`/shifts?start=${date}&end=${date}&user_id=${userId}&location_id=${PROVIDER_LOCATION_ID}&include_open=true`);
   return (data.shifts || []).filter(s => s.user_id === Number(userId));
 }
 
