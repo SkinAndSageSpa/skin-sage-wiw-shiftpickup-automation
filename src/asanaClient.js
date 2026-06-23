@@ -123,7 +123,7 @@ async function createOpenShiftTask({
   now,
 }) {
   const firstName = provider.name.split(' ')[0];
-  const name  = `Open Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
