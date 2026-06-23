@@ -27,6 +27,11 @@ function formatDate(date) {
   return date.toISOString().split('T')[0];
 }
 
+function shortDate(shiftDate) {
+  const [, m, d] = shiftDate.split('-');
+  return `${parseInt(m)}/${parseInt(d)}`;
+}
+
 async function getWorkspaceGid() {
   if (_workspaceGid) return _workspaceGid;
   const res  = await fetch(`${ASANA_BASE_URL}/projects/${SPA_OPERATIONS_PROJECT_GID}?opt_fields=workspace`, { headers: getHeaders() });
@@ -117,7 +122,8 @@ async function createOpenShiftTask({
   isBackToBack,
   now,
 }) {
-  const name  = `Schedule Update – ${provider.name} picked up open shift (${shiftDate})`;
+  const firstName = provider.name.split(' ')[0];
+  const name  = `Open Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
