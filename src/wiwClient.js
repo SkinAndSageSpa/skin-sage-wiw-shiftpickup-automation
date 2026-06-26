@@ -14,7 +14,6 @@ const LOGIN_URL = 'https://api.login.wheniwork.com/login';
 const POSITION_ESTI = 11742907;
 const POSITION_LMT  = 11742908;
 const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT];
-const PROVIDER_LOCATION_ID  = 5837840;
 
 const TIMEZONE = 'America/Los_Angeles';
 
@@ -57,7 +56,6 @@ async function login() {
       });
       if (!res.ok) throw new Error(`WIW login failed: HTTP ${res.status} ${await res.text()}`);
       const data = await res.json();
-      // Login response uses "person" key (not "user") and token is at the top level.
       const token = data.token || data.session_token || data?.person?.token || data?.user?.token;
       if (!token) throw new Error('WIW login OK but no token in response');
       _token = token;
@@ -119,16 +117,17 @@ async function getRecentApprovedSwaps() {
   return swaps.filter(s => isRecent(s.updated_at || s.created_at));
 }
 
-// Returns all shifts at the provider location for today through 60 days out.
-// Used by handler.js to diff against the previous snapshot for open shift detection.
+// Returns all shifts account-wide for today through 60 days out, including
+// open (unassigned) shifts. No location filter — open shifts may appear under
+// any location in this account.
 async function getLocationShifts() {
-  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&location_id=${PROVIDER_LOCATION_ID}&include_open=true`);
+  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&include_open=true`);
   return data.shifts || [];
 }
 
 // Returns all assigned shifts for a user on a given YYYY-MM-DD date.
 async function getUserShiftsOnDate(userId, date) {
-  const data = await apiGet(`/shifts?start=${date}&end=${date}&user_id=${userId}&location_id=${PROVIDER_LOCATION_ID}&include_open=true`);
+  const data = await apiGet(`/shifts?start=${date}&end=${date}&user_id=${userId}`);
   return (data.shifts || []).filter(s => s.user_id === Number(userId));
 }
 
@@ -176,5 +175,5 @@ module.exports = {
   getRecentApprovedSwaps, getLocationShifts,
   isProvider, positionLabel,
   shiftDateKey, formatShiftDate, formatShiftTime, shiftHours,
-  POSITION_ESTI, POSITION_LMT, PROVIDER_POSITION_IDS, PROVIDER_LOCATION_ID,
+  POSITION_ESTI, POSITION_LMT, PROVIDER_POSITION_IDS,
 };
