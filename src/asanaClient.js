@@ -9,8 +9,14 @@ const ASANA_BASE_URL = 'https://app.asana.com/api/1.0';
 
 const SPA_OPERATIONS_PROJECT_GID = process.env.ASANA_PROJECT_GID        || '1211852426828244';
 const ASSIGNEE_GID               = process.env.ASANA_ASSIGNEE_GID       || '1214912621580962'; // assistant.eldestsister@gmail.com
+const SOFIE_GID                  =                                          '1211841527818964'; // servicesdirector@skinandsagespa.com (Sofie LaCarrubba)
 const PRIORITY_FIELD_GID         = process.env.ASANA_PRIORITY_FIELD_GID || '1204876556629872';
 const PRIORITY_HIGH_OPTION_GID   = process.env.ASANA_PRIORITY_HIGH_GID  || '1204876556629873';
+
+// Shifts within 24 hours go to Sofie for immediate action; others to the default assignee.
+function pickAssignee(isUrgent) {
+  return isUrgent ? SOFIE_GID : ASSIGNEE_GID;
+}
 
 let _workspaceGid = null;
 
@@ -49,7 +55,7 @@ async function taskExists(name) {
   return (data.data || []).some(t => t.name === name);
 }
 
-async function createTask({ name, notes, dueDate }) {
+async function createTask({ name, notes, dueDate, assigneeGid = ASSIGNEE_GID }) {
   const res = await fetch(`${ASANA_BASE_URL}/tasks`, {
     method: 'POST',
     headers: getHeaders(),
@@ -58,7 +64,7 @@ async function createTask({ name, notes, dueDate }) {
         name,
         notes,
         due_on: dueDate,
-        assignee: ASSIGNEE_GID,
+        assignee: assigneeGid,
         projects: [SPA_OPERATIONS_PROJECT_GID],
         custom_fields: { [PRIORITY_FIELD_GID]: PRIORITY_HIGH_OPTION_GID },
       },
@@ -79,6 +85,7 @@ async function createDroppedShiftTask({
   shiftDisplay,
   shiftHours,
   droppingHasRemainingShift,
+  assigneeGid,
   now,
 }) {
   const name  = `Shift Dropped - Close Books in Mangomint – ${droppingProvider.name} (${shiftDate})`;
@@ -106,6 +113,7 @@ async function createDroppedShiftTask({
       removeStep,
     ].join('\n'),
     dueDate: today,
+    assigneeGid,
   });
 }
 
@@ -120,6 +128,7 @@ async function createOpenShiftTask({
   shiftDisplay,
   shiftHours,
   isBackToBack,
+  assigneeGid,
   now,
 }) {
   const firstName = provider.name.split(' ')[0];
@@ -150,6 +159,7 @@ async function createOpenShiftTask({
       ...steps,
     ].join('\n'),
     dueDate: today,
+    assigneeGid,
   });
 }
 
@@ -165,6 +175,7 @@ async function createDropPickupTask({
   shiftDisplay,
   shiftHours,
   isBackToBack,
+  assigneeGid,
   now,
 }) {
   const name  = `Shift Pickup - Open Books in Mangomint – ${pickingProvider.name} (${shiftDate})`;
@@ -195,7 +206,8 @@ async function createDropPickupTask({
       ...steps,
     ].join('\n'),
     dueDate: today,
+    assigneeGid,
   });
 }
 
-module.exports = { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask };
+module.exports = { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask, pickAssignee };

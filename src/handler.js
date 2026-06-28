@@ -5,7 +5,7 @@
  */
 
 const wiw                        = require('./wiwClient');
-const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask } = require('./asanaClient');
+const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask, pickAssignee } = require('./asanaClient');
 const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
 
 async function processDroppedShift(swap, userCache) {
@@ -51,8 +51,10 @@ async function processDroppedShift(swap, userCache) {
   ]);
   const droppingHasRemainingShift = droppingShiftsToday.length > 0;
   const pickingIsBackToBack       = pickingShiftsToday.length >= 2;
+  const isUrgent                  = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
+  const assigneeGid               = pickAssignee(isUrgent);
 
-  console.log(`  Swap ${swap.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} (${hours} hrs)`);
+  console.log(`  Swap ${swap.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
 
   const [closeTask, openTask] = await Promise.all([
     createDroppedShiftTask({
@@ -62,6 +64,7 @@ async function processDroppedShift(swap, userCache) {
       shiftDisplay,
       shiftHours: hours,
       droppingHasRemainingShift,
+      assigneeGid,
       now: new Date(),
     }),
     createDropPickupTask({
@@ -71,6 +74,7 @@ async function processDroppedShift(swap, userCache) {
       shiftDisplay,
       shiftHours: hours,
       isBackToBack: pickingIsBackToBack,
+      assigneeGid,
       now: new Date(),
     }),
   ]);
@@ -96,8 +100,10 @@ async function processOpenShiftPickup(shift, userCache) {
 
   const shiftsToday  = await wiw.getUserShiftsOnDate(shift.user_id, shiftDate);
   const isBackToBack = shiftsToday.length >= 2;
+  const isUrgent     = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
+  const assigneeGid  = pickAssignee(isUrgent);
 
-  console.log(`  Open shift ${shift.id}: ${name} (${position}), ${shiftDisplay} (${hours} hrs)`);
+  console.log(`  Open shift ${shift.id}: ${name} (${position}), ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
 
   const task = await createOpenShiftTask({
     provider: { name, position },
@@ -105,6 +111,7 @@ async function processOpenShiftPickup(shift, userCache) {
     shiftDisplay,
     shiftHours: hours,
     isBackToBack,
+    assigneeGid,
     now: new Date(),
   });
 
