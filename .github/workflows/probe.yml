@@ -7,7 +7,7 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe WIW positions and locations
+      - name: Probe WIW account ID
         env:
           WIW_API_KEY: ${{ secrets.WIW_API_KEY }}
           WIW_EMAIL:   ${{ secrets.WIW_EMAIL }}
@@ -20,20 +20,14 @@ jobs:
               headers: { 'W-Key': process.env.WIW_API_KEY, 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: process.env.WIW_EMAIL, password: process.env.WIW_PASSWORD }),
             });
-            const { token } = await loginRes.json();
+            const loginData = await loginRes.json();
+            const token = loginData.token;
             const headers = { 'W-Token': token, 'Content-Type': 'application/json' };
-
-            const [posRes, locRes] = await Promise.all([
-              fetch('https://api.wheniwork.com/2/positions', { headers }),
-              fetch('https://api.wheniwork.com/2/locations', { headers }),
-            ]);
-            const { positions } = await posRes.json();
-            const { locations } = await locRes.json();
-
-            console.log('\n=== POSITIONS ===');
-            for (const p of positions || []) console.log(`  ${p.id}: ${p.name}`);
-            console.log('\n=== LOCATIONS ===');
-            for (const l of locations || []) console.log(`  ${l.id}: ${l.name}`);
+            const accRes = await fetch('https://api.wheniwork.com/2/accounts', { headers });
+            const { accounts } = await accRes.json();
+            console.log('
+=== ACCOUNTS ===');
+            for (const a of accounts || []) console.log(`  ${a.id}: ${a.name} (subdomain: ${a.subdomain})`);
           }
           main().catch(e => { console.error(e); process.exit(1); });
           JS
