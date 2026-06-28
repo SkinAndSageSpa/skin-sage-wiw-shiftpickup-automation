@@ -17,9 +17,10 @@ const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT];
 
 const TIMEZONE = 'America/Los_Angeles';
 
-// How far back to look for recent pickups (minutes). Run interval is 60 min;
-// 30-min buffer ensures no pickups are missed if the cron fires slightly late.
-const LOOKBACK_MINUTES = 90;
+// How far back to look for recent pickups (minutes). GitHub Actions cron is
+// unreliable — the hourly schedule fires every 83–295 min in practice. 360 min
+// covers the worst observed gap. Deduplication in asanaClient prevents double-tasks.
+const LOOKBACK_MINUTES = 360;
 
 let _token = null;
 
