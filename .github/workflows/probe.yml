@@ -34,21 +34,27 @@ jobs:
             console.log('\n=== ACCOUNTS ===');
             console.log(JSON.stringify(await accRes.json(), null, 2));
 
-            const wide = await fetch(`https://api.wheniwork.com/2/shifts?start=2026-07-01&end=2026-07-31&user_id=${priscilla.id}`, { headers });
-            const wideData = await wide.json();
-            console.log(`\n=== Priscilla shifts July 2026, no include_open (${(wideData.shifts||[]).length}) ===`);
-            for (const s of wideData.shifts || []) {
-              console.log(JSON.stringify({ id: s.id, user_id: s.user_id, is_open: s.is_open, start_time: s.start_time, location_id: s.location_id }));
-            }
+            // Reproduce the EXACT production query (today -> +60 days) and check for pagination/limit truncation.
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            const end60 = new Date(Date.now() + 60 * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            const prodUrl = `https://api.wheniwork.com/2/shifts?start=${today}&end=${end60}&include_open=true`;
+            const prodRes = await fetch(prodUrl, { headers });
+            console.log(`\n=== PRODUCTION QUERY: ${prodUrl} ===`);
+            console.log('Response headers:');
+            for (const [k, v] of prodRes.headers.entries()) console.log(`  ${k}: ${v}`);
+            const prodData = await prodRes.json();
+            console.log('Top-level response keys:', Object.keys(prodData));
+            if (prodData.meta) console.log('meta:', JSON.stringify(prodData.meta));
+            console.log(`shifts.length = ${(prodData.shifts || []).length}`);
+            const target = (prodData.shifts || []).find(s => s.id === 3804713705);
+            console.log(`Target shift 3804713705 present in production-query result: ${!!target}`);
+            if (target) console.log(JSON.stringify(target, null, 2));
 
-            const wide2 = await fetch(`https://api.wheniwork.com/2/shifts?start=2026-07-01&end=2026-07-31&include_open=true`, { headers });
-            const wide2Data = await wide2.json();
-            console.log(`\n=== ALL shifts July 2026, include_open=true (${(wide2Data.shifts||[]).length}) ===`);
-            const on20 = (wide2Data.shifts || []).filter(s => (s.start_time||'').includes('2026-07-20'));
-            console.log(`  -> of which on 07-20: ${on20.length}`);
-            for (const s of on20) {
-              console.log(JSON.stringify({ id: s.id, user_id: s.user_id, is_open: s.is_open, openshift_approval_request_id: s.openshift_approval_request_id, location_id: s.location_id, start_time: s.start_time, end_time: s.end_time, created_at: s.created_at, updated_at: s.updated_at }));
-            }
+            // Sanity check: does a single-day query for 07-20 alone return it?
+            const singleDay = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-20&end=2026-07-20&include_open=true', { headers });
+            const singleDayData = await singleDay.json();
+            console.log(`\nSingle-day (2026-07-20) query shifts.length = ${(singleDayData.shifts||[]).length}`);
+            console.log(`Target present in single-day query: ${!!(singleDayData.shifts||[]).find(s => s.id === 3804713705)}`);
           }
           main().catch(e => { console.error(e); process.exit(1); });
           JS
