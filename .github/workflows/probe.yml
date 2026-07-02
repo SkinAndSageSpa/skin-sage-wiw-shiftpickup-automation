@@ -7,7 +7,7 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe WIW account ID
+      - name: Probe WIW shift for Priscilla / 7-20
         env:
           WIW_API_KEY: ${{ secrets.WIW_API_KEY }}
           WIW_EMAIL:   ${{ secrets.WIW_EMAIL }}
@@ -23,11 +23,25 @@ jobs:
             const loginData = await loginRes.json();
             const token = loginData.token;
             const headers = { 'W-Token': token, 'Content-Type': 'application/json' };
-            const accRes = await fetch('https://api.wheniwork.com/2/accounts', { headers });
-            const { accounts } = await accRes.json();
-            console.log('
-=== ACCOUNTS ===');
-            for (const a of accounts || []) console.log(`  ${a.id}: ${a.name} (subdomain: ${a.subdomain})`);
+
+            const uRes = await fetch('https://api.wheniwork.com/2/users', { headers });
+            const { users } = await uRes.json();
+            const priscilla = (users || []).find(u => /priscilla/i.test(u.first_name) && /barajas/i.test(u.last_name));
+            console.log('=== USER ===');
+            console.log(priscilla ? JSON.stringify(priscilla, null, 2) : '  NOT FOUND');
+
+            const sRes = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-20&end=2026-07-20&include_open=true', { headers });
+            const { shifts } = await sRes.json();
+            console.log(`\n=== SHIFTS on 2026-07-20 (${(shifts || []).length}) ===`);
+            for (const s of shifts || []) {
+              console.log(JSON.stringify({
+                id: s.id, user_id: s.user_id, is_open: s.is_open,
+                openshift_approval_request_id: s.openshift_approval_request_id,
+                position_id: s.position_id, location_id: s.location_id,
+                start_time: s.start_time, end_time: s.end_time,
+                created_at: s.created_at, updated_at: s.updated_at,
+              }, null, 2));
+            }
           }
           main().catch(e => { console.error(e); process.exit(1); });
           JS
