@@ -15,21 +15,45 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Probe WIW account state
+      - name: Backfill missed open-shift task (Katie Bennett, 3808897211)
         env:
           WIW_API_KEY: ${{ secrets.WIW_API_KEY }}
           WIW_EMAIL:   ${{ secrets.WIW_EMAIL }}
           WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
+          ASANA_ACCESS_TOKEN: ${{ secrets.ASANA_ACCESS_TOKEN }}
+          ASANA_PROJECT_GID:  ${{ secrets.ASANA_PROJECT_GID }}
         run: |
           node - << 'JS'
-          const wiw = require('./src/wiwClient');
+          const wiw   = require('./src/wiwClient');
+          const asana = require('./src/asanaClient');
           (async () => {
             await wiw.login();
-            const ids = [3808896259,3808897193,3808897198,3808897211,3808897218,3808896258,3808897172,3808897175,3808897179,3808897183,3808897188,3808896257,3808897162,3808897167,3808897307,3808897313];
-            for (const id of ids) {
-              const shift = await wiw.getShift(id);
-              const user  = await wiw.getUser(shift.user_id);
-              console.log(`shift ${id}: ${user.first_name} ${user.last_name}  ${wiw.formatShiftTime(shift)}`);
-            }
+            const shift = await wiw.getShift(3808897211);
+            const user  = await wiw.getUser(shift.user_id);
+            if (!wiw.isProvider(user)) throw new Error('Not a provider — aborting');
+
+            const name     = `${user.first_name} ${user.last_name}`;
+            const position = wiw.positionLabel(user);
+            const shiftDate    = wiw.shiftDateKey(shift);
+            const shiftDisplay = `${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}`;
+            const hours        = wiw.shiftHours(shift);
+
+            const shiftsToday  = await wiw.getUserShiftsOnDate(shift.user_id, shiftDate);
+            const isBackToBack = shiftsToday.length >= 2;
+            const isUrgent     = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
+            const assigneeGid  = asana.pickAssignee(isUrgent);
+
+            console.log(`Backfilling: ${name} (${position}), ${shiftDisplay} (${hours} hrs), backToBack=${isBackToBack}, urgent=${isUrgent}`);
+
+            const task = await asana.createOpenShiftTask({
+              provider: { name, position },
+              shiftDate,
+              shiftDisplay,
+              shiftHours: hours,
+              isBackToBack,
+              assigneeGid,
+              now: new Date(),
+            });
+            console.log(task ? `Created: ${task?.data?.permalink_url || JSON.stringify(task)}` : 'Skipped (already exists)');
           })().catch(e => { console.error(e); process.exit(1); });
           JS
