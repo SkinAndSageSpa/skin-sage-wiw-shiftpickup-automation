@@ -25,9 +25,11 @@ jobs:
           const wiw = require('./src/wiwClient');
           (async () => {
             await wiw.login();
-            const shift = await wiw.getShift(3808897198);
-            const user  = await wiw.getUser(shift.user_id);
-            console.log(`shift ${shift.id}: user_id=${shift.user_id} name=${user.first_name} ${user.last_name}`);
-            console.log(`  ${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}  isProvider=${wiw.isProvider(user)}  position=${wiw.positionLabel(user)}`);
+            const ids = [3808896259,3808897193,3808897198,3808897211,3808897218,3808896258,3808897172,3808897175,3808897179,3808897183,3808897188,3808896257,3808897162,3808897167,3808897307,3808897313];
+            for (const id of ids) {
+              const shift = await wiw.getShift(id);
+              const user  = await wiw.getUser(shift.user_id);
+              console.log(`shift ${id}: ${user.first_name} ${user.last_name}  ${wiw.formatShiftTime(shift)}`);
+            }
           })().catch(e => { console.error(e); process.exit(1); });
           JS
