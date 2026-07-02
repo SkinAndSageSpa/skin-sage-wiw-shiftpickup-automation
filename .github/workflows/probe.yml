@@ -55,6 +55,27 @@ jobs:
             const singleDayData = await singleDay.json();
             console.log(`\nSingle-day (2026-07-20) query shifts.length = ${(singleDayData.shifts||[]).length}`);
             console.log(`Target present in single-day query: ${!!(singleDayData.shifts||[]).find(s => s.id === 3804713705)}`);
+
+            // Try end+1 (exclusive end theory) and a shifted narrower window to test for a hard page cap.
+            const singleDayPlus1 = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-20&end=2026-07-21&include_open=true', { headers });
+            const singleDayPlus1Data = await singleDayPlus1.json();
+            console.log(`\nstart=07-20&end=07-21 shifts.length = ${(singleDayPlus1Data.shifts||[]).length}, target present: ${!!(singleDayPlus1Data.shifts||[]).find(s => s.id === 3804713705)}`);
+
+            const page2 = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-01&end=2026-08-30&include_open=true&page=2', { headers });
+            const page2Data = await page2.json();
+            console.log(`\npage=2 shifts.length = ${(page2Data.shifts||[]).length}`);
+
+            const narrower = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-15&end=2026-07-25&include_open=true', { headers });
+            const narrowerData = await narrower.json();
+            console.log(`\nstart=07-15&end=07-25 shifts.length = ${(narrowerData.shifts||[]).length}, target present: ${!!(narrowerData.shifts||[]).find(s => s.id === 3804713705)}`);
+
+            // What does production's actual window (today -> +60d) look like broken into halves?
+            const half1 = await fetch(`https://api.wheniwork.com/2/shifts?start=${today}&end=2026-07-19&include_open=true`, { headers });
+            const half1Data = await half1.json();
+            console.log(`\n${today} -> 2026-07-19 shifts.length = ${(half1Data.shifts||[]).length}`);
+            const half2 = await fetch(`https://api.wheniwork.com/2/shifts?start=2026-07-19&end=${end60}&include_open=true`, { headers });
+            const half2Data = await half2.json();
+            console.log(`2026-07-19 -> ${end60} shifts.length = ${(half2Data.shifts||[]).length}, target present: ${!!(half2Data.shifts||[]).find(s => s.id === 3804713705)}`);
           }
           main().catch(e => { console.error(e); process.exit(1); });
           JS
