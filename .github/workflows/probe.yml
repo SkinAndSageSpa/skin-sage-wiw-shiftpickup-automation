@@ -30,17 +30,24 @@ jobs:
             console.log('=== USER ===');
             console.log(priscilla ? JSON.stringify(priscilla, null, 2) : '  NOT FOUND');
 
-            const sRes = await fetch('https://api.wheniwork.com/2/shifts?start=2026-07-20&end=2026-07-20&include_open=true', { headers });
-            const { shifts } = await sRes.json();
-            console.log(`\n=== SHIFTS on 2026-07-20 (${(shifts || []).length}) ===`);
-            for (const s of shifts || []) {
-              console.log(JSON.stringify({
-                id: s.id, user_id: s.user_id, is_open: s.is_open,
-                openshift_approval_request_id: s.openshift_approval_request_id,
-                position_id: s.position_id, location_id: s.location_id,
-                start_time: s.start_time, end_time: s.end_time,
-                created_at: s.created_at, updated_at: s.updated_at,
-              }, null, 2));
+            const accRes = await fetch('https://api.wheniwork.com/2/accounts', { headers });
+            console.log('\n=== ACCOUNTS ===');
+            console.log(JSON.stringify(await accRes.json(), null, 2));
+
+            const wide = await fetch(`https://api.wheniwork.com/2/shifts?start=2026-07-01&end=2026-07-31&user_id=${priscilla.id}`, { headers });
+            const wideData = await wide.json();
+            console.log(`\n=== Priscilla shifts July 2026, no include_open (${(wideData.shifts||[]).length}) ===`);
+            for (const s of wideData.shifts || []) {
+              console.log(JSON.stringify({ id: s.id, user_id: s.user_id, is_open: s.is_open, start_time: s.start_time, location_id: s.location_id }));
+            }
+
+            const wide2 = await fetch(`https://api.wheniwork.com/2/shifts?start=2026-07-01&end=2026-07-31&include_open=true`, { headers });
+            const wide2Data = await wide2.json();
+            console.log(`\n=== ALL shifts July 2026, include_open=true (${(wide2Data.shifts||[]).length}) ===`);
+            const on20 = (wide2Data.shifts || []).filter(s => (s.start_time||'').includes('2026-07-20'));
+            console.log(`  -> of which on 07-20: ${on20.length}`);
+            for (const s of on20) {
+              console.log(JSON.stringify({ id: s.id, user_id: s.user_id, is_open: s.is_open, openshift_approval_request_id: s.openshift_approval_request_id, location_id: s.location_id, start_time: s.start_time, end_time: s.end_time, created_at: s.created_at, updated_at: s.updated_at }));
             }
           }
           main().catch(e => { console.error(e); process.exit(1); });
