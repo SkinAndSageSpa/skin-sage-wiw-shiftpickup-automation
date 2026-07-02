@@ -121,15 +121,35 @@ async function getRecentApprovedSwaps() {
 // Returns all shifts account-wide for today through 60 days out, including
 // open (unassigned) shifts. No location filter — open shifts may appear under
 // any location in this account.
+//
+// The /shifts endpoint silently caps results at ~400 with no pagination
+// support (a `page` param is accepted but ignored) and no total/meta field
+// to detect truncation. A single 60-day query can exceed that cap, which
+// silently dropped a real open shift from detection (missed pickup, 2026-07-01).
+// Querying in 7-day chunks keeps each request well under the cap.
+const SHIFT_QUERY_CHUNK_DAYS = 7;
+
 async function getLocationShifts() {
-  const data = await apiGet(`/shifts?start=${todayKey()}&end=${futureKey(60)}&include_open=true`);
-  return data.shifts || [];
+  const shiftsById = new Map();
+  for (let offset = 0; offset < 60; offset += SHIFT_QUERY_CHUNK_DAYS) {
+    const start = futureKey(offset);
+    const end   = futureKey(Math.min(offset + SHIFT_QUERY_CHUNK_DAYS, 60));
+    const data  = await apiGet(`/shifts?start=${start}&end=${end}&include_open=true`);
+    for (const s of data.shifts || []) shiftsById.set(s.id, s);
+  }
+  return [...shiftsById.values()];
 }
 
 // Returns all assigned shifts for a user on a given YYYY-MM-DD date.
+// `end` is exclusive on this API (start=end returns zero shifts even when
+// shifts exist that day), so the end boundary is bumped by one day and
+// results are filtered back down to the requested date.
 async function getUserShiftsOnDate(userId, date) {
-  const data = await apiGet(`/shifts?start=${date}&end=${date}&user_id=${userId}`);
-  return (data.shifts || []).filter(s => s.user_id === Number(userId));
+  const nextDay = new Date(`${date}T00:00:00Z`);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  const end = nextDay.toISOString().slice(0, 10);
+  const data = await apiGet(`/shifts?start=${date}&end=${end}&user_id=${userId}`);
+  return (data.shifts || []).filter(s => s.user_id === Number(userId) && shiftDateKey(s) === date);
 }
 
 function isProvider(user) {

@@ -7,11 +7,38 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe WIW shift for Priscilla / 7-20
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Verify getLocationShifts no longer truncates
         env:
           WIW_API_KEY: ${{ secrets.WIW_API_KEY }}
           WIW_EMAIL:   ${{ secrets.WIW_EMAIL }}
           WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
+        run: |
+          node - << 'JS'
+          const wiw = require('./src/wiwClient');
+          (async () => {
+            await wiw.login();
+            const shifts = await wiw.getLocationShifts();
+            console.log(`getLocationShifts() total (chunked): ${shifts.length}`);
+            const target = shifts.find(s => s.id === 3804713705);
+            console.log(`Target shift 3804713705 present: ${!!target}`);
+            const unassigned = shifts.filter(s => !s.user_id || s.user_id === 0);
+            console.log(`Currently unassigned: ${unassigned.length}`);
+
+            const onDate = await wiw.getUserShiftsOnDate(52119785, '2026-07-20');
+            console.log(`getUserShiftsOnDate(Priscilla, 2026-07-20): ${onDate.length} shift(s)`);
+          })().catch(e => { console.error(e); process.exit(1); });
+          JS
+
+      - name: OLD probe (for reference)
+        if: false
         run: |
           node - << 'JS'
           async function main() {
