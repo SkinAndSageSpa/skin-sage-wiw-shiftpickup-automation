@@ -25,12 +25,9 @@ jobs:
           const wiw = require('./src/wiwClient');
           (async () => {
             await wiw.login();
-            const shifts = await wiw.getLocationShifts();
-            const target = shifts.filter(s => wiw.shiftDateKey(s) === '2026-07-29');
-            console.log(`Shifts on 2026-07-29: ${target.length}`);
-            for (const s of target) {
-              const label = s.user_id ? `user_id=${s.user_id}` : 'UNASSIGNED';
-              console.log(`  id=${s.id}  ${wiw.formatShiftTime(s)}  position_id=${s.position_id}  ${label}`);
-            }
+            const shift = await wiw.getShift(3808897198);
+            const user  = await wiw.getUser(shift.user_id);
+            console.log(`shift ${shift.id}: user_id=${shift.user_id} name=${user.first_name} ${user.last_name}`);
+            console.log(`  ${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}  isProvider=${wiw.isProvider(user)}  position=${wiw.positionLabel(user)}`);
           })().catch(e => { console.error(e); process.exit(1); });
           JS
