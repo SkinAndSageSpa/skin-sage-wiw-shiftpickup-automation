@@ -142,28 +142,56 @@ async function main() {
     catch (err) { console.error(`  Swap ${swap.id}: ERROR - ${err.message}`); }
   }
 
-  // --- Open shift pickups (snapshot diff) ---
-  // Load the previous snapshot of unassigned shifts, then compare to current
-  // state. Any shift that was unassigned last run and is now assigned was picked up.
+  // --- Open shift pickups (accumulated watch-list diff) ---
+  // We watch every shift ever seen unassigned — not just the ones seen on the
+  // immediately preceding run — so a gap in any single run (failed WIW login,
+  // transient API error, a truncated query) can't cause a permanent miss. A
+  // shift stays watched until a run sees it assigned and successfully creates
+  // its task, or its date passes unfilled. See snapshotClient.js for why.
   // We don't rely on openshift_approval_request_id because this account auto-assigns
   // without creating an approval request record.
-  const snapshot       = await loadSnapshot();
-  const allShifts      = await wiw.getLocationShifts();
-  const nowUnassigned  = allShifts.filter(s => !s.user_id || s.user_id === 0);
-  const pickedUp       = snapshot.capturedAt
-    ? allShifts.filter(s => s.user_id && s.user_id !== 0 && snapshot.unassignedIds.has(s.id))
-    : [];
+  const snapshot  = await loadSnapshot();
+  const watched   = snapshot.watched;
+  const allShifts = await wiw.getLocationShifts();
+  const byId      = new Map(allShifts.map(s => [s.id, s]));
+  const todayKey  = wiw.todayKey();
 
-  console.log(`Snapshot from: ${snapshot.capturedAt || 'none'} — ${snapshot.unassignedIds.size} previously unassigned.`);
-  console.log(`Found ${pickedUp.length} open shift pickup(s).`);
-
-  for (const shift of pickedUp) {
-    try { await processOpenShiftPickup(shift, userCache); }
-    catch (err) { console.error(`  Shift ${shift.id}: ERROR - ${err.message}`); }
+  const pickedUp = [];
+  for (const [id, info] of watched) {
+    const shift = byId.get(id);
+    if (!shift) {
+      // Aged out of the 60-day window (or deleted) without ever being picked up.
+      // Only prune once its date has passed, in case this is just a transient
+      // gap in this run's query rather than a real disappearance.
+      if (info.shiftDate && info.shiftDate < todayKey) {
+        console.log(`  Shift ${id}: aged out unfilled (was ${info.shiftDate}), removing from watch`);
+        watched.delete(id);
+      }
+      continue;
+    }
+    if (!info.shiftDate) info.shiftDate = wiw.shiftDateKey(shift); // backfill for migrated entries
+    if (shift.user_id && shift.user_id !== 0) pickedUp.push(shift);
   }
 
-  await saveSnapshot(nowUnassigned, snapshot.sha);
-  console.log(`Snapshot updated: ${nowUnassigned.length} unassigned shifts saved.`);
+  console.log(`Watching ${watched.size} open shift(s) (accumulated) — ${pickedUp.length} picked up this run.`);
+
+  for (const shift of pickedUp) {
+    try {
+      await processOpenShiftPickup(shift, userCache);
+      watched.delete(shift.id); // handled — stop watching
+    } catch (err) {
+      console.error(`  Shift ${shift.id}: ERROR - ${err.message} (staying watched, will retry next run)`);
+    }
+  }
+
+  for (const shift of allShifts) {
+    if ((!shift.user_id || shift.user_id === 0) && !watched.has(shift.id)) {
+      watched.set(shift.id, { firstSeenAt: new Date().toISOString(), shiftDate: wiw.shiftDateKey(shift) });
+    }
+  }
+
+  await saveSnapshot(watched, snapshot.sha);
+  console.log(`Snapshot updated: watching ${watched.size} open shift(s).`);
 
   console.log('Done.');
 }

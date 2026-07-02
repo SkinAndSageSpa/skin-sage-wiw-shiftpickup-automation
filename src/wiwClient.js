@@ -194,7 +194,7 @@ function shiftHours(shift) {
 module.exports = {
   login, getUser, getShift, getUserShiftsOnDate,
   getRecentApprovedSwaps, getLocationShifts,
-  isProvider, positionLabel,
+  isProvider, positionLabel, todayKey,
   shiftDateKey, formatShiftDate, formatShiftTime, shiftHours,
   POSITION_ESTI, POSITION_LMT, PROVIDER_POSITION_IDS,
 };
