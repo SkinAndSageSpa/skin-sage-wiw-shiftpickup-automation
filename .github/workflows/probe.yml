@@ -26,11 +26,14 @@ jobs:
           (async () => {
             await wiw.login();
             const shifts = await wiw.getLocationShifts();
-            console.log(`getLocationShifts() total: ${shifts.length}`);
-            const unassigned = shifts.filter(s => !s.user_id || s.user_id === 0);
-            console.log(`Currently unassigned: ${unassigned.length}`);
-            for (const s of unassigned) {
-              console.log(`  id=${s.id}  ${wiw.formatShiftDate(s)} ${wiw.formatShiftTime(s)}  position_id=${s.position_id}`);
+            console.log(`getLocationShifts() total (60-day window): ${shifts.length}`);
+            for (const dateKey of ['2026-07-11', '2026-07-12']) {
+              const onDate = shifts.filter(s => wiw.shiftDateKey(s) === dateKey);
+              const open   = onDate.filter(s => !s.user_id || s.user_id === 0);
+              console.log(`\n${dateKey}: ${onDate.length} total shift(s) returned, ${open.length} open`);
+              for (const s of onDate) {
+                console.log(`  id=${s.id}  user_id=${s.user_id || 0}  ${wiw.formatShiftTime(s)}  position_id=${s.position_id}`);
+              }
             }
           })().catch(e => { console.error(e); process.exit(1); });
           JS
