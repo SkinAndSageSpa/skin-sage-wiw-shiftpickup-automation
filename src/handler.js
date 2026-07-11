@@ -18,17 +18,26 @@ const { loadSnapshot, saveSnapshot }                  = require('./snapshotClien
 
 // Routine weekly schedule publishing (skin-sage-wiw-publish-weekly-schedule,
 // separate repo) creates a full batch of brand-new, already-assigned shift
-// rows ~23-30 days out every Tuesday. Without this guard, every shift in that
-// batch would look identical to a real pickup (a shift_id never seen before,
-// now assigned) and flood Asana. That job never reassigns an *existing*
-// shift_id — only creates new ones for empty weeks — so trades need no such
-// guard: they're inherently immune since they always involve a shift_id we've
-// already seen.
-const NEAR_TERM_PICKUP_WINDOW_DAYS = 14;
+// rows ~23-30 days out every Tuesday, all in one run. Without a guard, every
+// shift in that batch would look identical to a real pickup (a shift_id never
+// seen before, now assigned) and flood Asana with dozens of tasks at once.
+// That job never reassigns an *existing* shift_id — only creates new ones for
+// weeks that are currently empty — so trades need no guard at all: they're
+// inherently immune since they always involve a shift_id we've already seen.
+//
+// The guard below only suppresses a newly-seen shift when BOTH signals match
+// the batch's actual profile: (a) it arrived alongside an unusually large
+// number of other newly-seen shifts in this same run, AND (b) it's far enough
+// out in date to match where that job publishes. Deliberately not a plain
+// date cutoff — a lone real pickup for a shift 15+ days out must still fire,
+// since it was never part of a batch to begin with. Requiring both signals
+// means a near-term pickup is never suppressed even if it happens to land in
+// the same run as a real batch-publish.
+const BATCH_SIZE_THRESHOLD  = 8;  // this many+ newly-seen shifts in one run looks like a publish batch, not individual pickups
+const BATCH_MIN_DAYS_OUT    = 18; // safely under the ~23-30 day horizon the publish job actually targets
 
-function isNearTerm(shiftDateKey) {
-  const days = (new Date(`${shiftDateKey}T00:00:00Z`) - new Date(`${wiw.todayKey()}T00:00:00Z`)) / 86400000;
-  return days <= NEAR_TERM_PICKUP_WINDOW_DAYS;
+function daysOut(shiftDateKey) {
+  return (new Date(`${shiftDateKey}T00:00:00Z`) - new Date(`${wiw.todayKey()}T00:00:00Z`)) / 86400000;
 }
 
 async function processTrade({ droppingUserId, pickingUserId, shift, userCache }) {
@@ -161,24 +170,32 @@ async function main() {
     return;
   }
 
-  const trades  = [];
-  const pickups = [];
+  const trades    = [];
+  const newlySeen = [];
 
   for (const shift of currentShifts) {
     const prev = previous.get(shift.id);
     if (!prev) {
-      const shiftDate = wiw.shiftDateKey(shift);
-      if (isNearTerm(shiftDate)) {
-        pickups.push(shift);
-      } else {
-        console.log(`  Shift ${shift.id}: newly-assigned but ${shiftDate} is beyond the ${NEAR_TERM_PICKUP_WINDOW_DAYS}-day window (likely routine weekly publish), tracking only`);
-      }
+      newlySeen.push(shift);
     } else if (prev.userId !== shift.user_id) {
       trades.push({ shift, droppingUserId: prev.userId, pickingUserId: shift.user_id });
     }
   }
 
-  console.log(`Found ${trades.length} trade(s) and ${pickups.length} near-term pickup(s).`);
+  // Only suppress a newly-seen shift when it matches BOTH signals of the
+  // weekly-publish batch's actual profile — see comment above BATCH_SIZE_THRESHOLD.
+  const looksLikeBatch = newlySeen.length >= BATCH_SIZE_THRESHOLD;
+  const pickups = [];
+  for (const shift of newlySeen) {
+    const shiftDate = wiw.shiftDateKey(shift);
+    if (looksLikeBatch && daysOut(shiftDate) >= BATCH_MIN_DAYS_OUT) {
+      console.log(`  Shift ${shift.id}: newly-assigned, part of a ${newlySeen.length}-shift batch and ${shiftDate} is far out — treating as routine weekly publish, tracking only`);
+    } else {
+      pickups.push(shift);
+    }
+  }
+
+  console.log(`Found ${trades.length} trade(s) and ${pickups.length} pickup(s) (${newlySeen.length} newly-assigned total).`);
 
   for (const { shift, droppingUserId, pickingUserId } of trades) {
     try { await processTrade({ droppingUserId, pickingUserId, shift, userCache }); }
