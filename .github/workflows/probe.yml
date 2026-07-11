@@ -33,7 +33,9 @@ jobs:
             if (!token) { console.error('No token:', JSON.stringify(loginData)); process.exit(1); }
 
             const variants = [
-              '/shifts?start=2026-07-12&end=2026-07-13&include_open=true',
+              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5837840&include_open=true',
+              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5838148&include_open=true',
+              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5846641&include_open=true',
             ];
 
             for (const path of variants) {
