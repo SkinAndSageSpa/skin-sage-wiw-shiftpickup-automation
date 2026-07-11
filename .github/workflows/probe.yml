@@ -33,17 +33,9 @@ jobs:
             if (!token) { console.error('No token:', JSON.stringify(loginData)); process.exit(1); }
 
             const variants = [
-              '/shifts?start=2026-07-12&end=2026-07-13',
               '/shifts?start=2026-07-12&end=2026-07-13&include_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&include_open=1',
-              '/shifts?start=2026-07-12&end=2026-07-13&show_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&is_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&unassigned=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&status=open',
-              '/openshifts?start=2026-07-12&end=2026-07-13',
-              '/shifts/open?start=2026-07-12&end=2026-07-13',
-              '/shifts?start=2026-07-12&end=2026-07-13&published=true&include_open=true',
+              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5837840&include_open=true',
+              '/shifts?start=2026-07-11&end=2026-07-12&location_id=5837840&include_open=true',
             ];
 
             for (const path of variants) {
@@ -52,13 +44,15 @@ jobs:
                   headers: { 'W-Token': token, 'Content-Type': 'application/json' },
                 });
                 const bodyText = await res.text();
-                let count = 'n/a';
+                console.log(`\n=== ${path} -> HTTP ${res.status} ===`);
                 try {
                   const parsed = JSON.parse(bodyText);
-                  const arr = parsed.shifts || parsed.openshifts || parsed.open_shifts || [];
-                  count = Array.isArray(arr) ? arr.length : JSON.stringify(Object.keys(parsed));
-                } catch (e) { count = `parse-error: ${bodyText.slice(0,120)}`; }
-                console.log(`${path} -> HTTP ${res.status}, count=${count}`);
+                  const arr = parsed.shifts || [];
+                  console.log(`  total: ${arr.length}, open (user_id=0): ${arr.filter(s => !s.user_id).length}`);
+                  for (const s of arr) {
+                    console.log(`  id=${s.id} user_id=${s.user_id || 0} start=${s.start_time} position_id=${s.position_id} site_id=${s.site_id}`);
+                  }
+                } catch (e) { console.log(`  parse-error: ${bodyText.slice(0,200)}`); }
               } catch (err) {
                 console.log(`${path} -> ERROR ${err.message}`);
               }
