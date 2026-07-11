@@ -22,40 +22,15 @@ jobs:
           WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
         run: |
           node - << 'JS'
+          const wiw = require('./src/wiwClient');
           (async () => {
-            const loginRes = await fetch('https://api.login.wheniwork.com/login', {
-              method: 'POST',
-              headers: { 'W-Key': process.env.WIW_API_KEY, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: process.env.WIW_EMAIL, password: process.env.WIW_PASSWORD }),
-            });
-            const loginData = await loginRes.json();
-            const token = loginData.token || loginData.session_token || loginData?.person?.token || loginData?.user?.token;
-            if (!token) { console.error('No token:', JSON.stringify(loginData)); process.exit(1); }
-
-            const variants = [
-              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5837840&include_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5838148&include_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5846641&include_open=true',
-            ];
-
-            for (const path of variants) {
-              try {
-                const res = await fetch(`https://api.wheniwork.com/2${path}`, {
-                  headers: { 'W-Token': token, 'Content-Type': 'application/json' },
-                });
-                const bodyText = await res.text();
-                console.log(`\n=== ${path} -> HTTP ${res.status} ===`);
-                console.log(`raw length: ${bodyText.length}`);
-                try {
-                  const parsed = JSON.parse(bodyText);
-                  console.log(`top-level keys: ${JSON.stringify(Object.keys(parsed))}`);
-                  console.log(`shifts.length: ${(parsed.shifts||[]).length}`);
-                  console.log(`is_open values seen: ${JSON.stringify((parsed.shifts||[]).map(s => s.is_open))}`);
-                  console.log(`meta/pagination: ${JSON.stringify(parsed.meta || parsed.pagination || parsed.total || 'none')}`);
-                } catch (e) { console.log(`parse-error: ${bodyText.slice(0,300)}`); }
-              } catch (err) {
-                console.log(`${path} -> ERROR ${err.message}`);
-              }
+            await wiw.login();
+            const shifts = await wiw.getLocationShifts();
+            console.log(`getLocationShifts() total: ${shifts.length}`);
+            const unassigned = shifts.filter(s => !s.user_id || s.user_id === 0);
+            console.log(`Currently unassigned: ${unassigned.length}`);
+            for (const s of unassigned) {
+              console.log(`  id=${s.id}  ${wiw.formatShiftDate(s)} ${wiw.formatShiftTime(s)}  position_id=${s.position_id}`);
             }
           })().catch(e => { console.error(e); process.exit(1); });
           JS
