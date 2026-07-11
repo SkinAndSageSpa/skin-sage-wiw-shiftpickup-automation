@@ -88,7 +88,8 @@ async function createDroppedShiftTask({
   assigneeGid,
   now,
 }) {
-  const name  = `Shift Dropped - Close Books in Mangomint – ${droppingProvider.name} (${shiftDate})`;
+  const firstName = droppingProvider.name.split(' ')[0];
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Drop`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
@@ -178,7 +179,8 @@ async function createDropPickupTask({
   assigneeGid,
   now,
 }) {
-  const name  = `Shift Pickup - Open Books in Mangomint – ${pickingProvider.name} (${shiftDate})`;
+  const firstName = pickingProvider.name.split(' ')[0];
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
