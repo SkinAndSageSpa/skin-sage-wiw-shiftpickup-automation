@@ -33,9 +33,8 @@ jobs:
             if (!token) { console.error('No token:', JSON.stringify(loginData)); process.exit(1); }
 
             const variants = [
-              '/shifts?start=2026-07-12&end=2026-07-13&include_open=true',
-              '/shifts?start=2026-07-12&end=2026-07-13&location_id=5837840&include_open=true',
-              '/shifts?start=2026-07-11&end=2026-07-12&location_id=5837840&include_open=true',
+              '/locations',
+              '/shifts/3796097400',
             ];
 
             for (const path of variants) {
@@ -45,14 +44,7 @@ jobs:
                 });
                 const bodyText = await res.text();
                 console.log(`\n=== ${path} -> HTTP ${res.status} ===`);
-                try {
-                  const parsed = JSON.parse(bodyText);
-                  const arr = parsed.shifts || [];
-                  console.log(`  total: ${arr.length}, open (user_id=0): ${arr.filter(s => !s.user_id).length}`);
-                  for (const s of arr) {
-                    console.log(`  id=${s.id} user_id=${s.user_id || 0} start=${s.start_time} position_id=${s.position_id} site_id=${s.site_id}`);
-                  }
-                } catch (e) { console.log(`  parse-error: ${bodyText.slice(0,200)}`); }
+                console.log(bodyText.slice(0, 3000));
               } catch (err) {
                 console.log(`${path} -> ERROR ${err.message}`);
               }
