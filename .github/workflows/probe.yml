@@ -26,19 +26,11 @@ jobs:
           (async () => {
             await wiw.login();
             const shifts = await wiw.getLocationShifts();
-            const target = shifts.filter(s => wiw.shiftDateKey(s) === '2026-07-11');
-            console.log(`Shifts on 2026-07-11: ${target.length}`);
-            for (const s of target) {
-              const user = s.user_id ? await wiw.getUser(s.user_id) : null;
-              console.log(JSON.stringify({
-                id: s.id,
-                user_id: s.user_id,
-                name: user ? `${user.first_name} ${user.last_name}` : null,
-                start_time: s.start_time,
-                created_at: s.created_at,
-                updated_at: s.updated_at,
-                position_id: s.position_id,
-              }));
+            console.log(`getLocationShifts() total: ${shifts.length}`);
+            const unassigned = shifts.filter(s => !s.user_id || s.user_id === 0);
+            console.log(`Currently unassigned: ${unassigned.length}`);
+            for (const s of unassigned) {
+              console.log(`  id=${s.id}  ${wiw.formatShiftDate(s)} ${wiw.formatShiftTime(s)}  position_id=${s.position_id}`);
             }
           })().catch(e => { console.error(e); process.exit(1); });
           JS
