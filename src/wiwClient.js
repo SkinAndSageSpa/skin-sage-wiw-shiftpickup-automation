@@ -11,16 +11,16 @@ const API = 'https://api.wheniwork.com/2';
 const LOGIN_URL = 'https://api.login.wheniwork.com/login';
 
 // === Account-specific IDs (skinandsagespa.com WIW account, May 2026) ===
-const POSITION_ESTI = 11742907;
-const POSITION_LMT  = 11742908;
-const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT];
+const POSITION_ESTI      = 11742907;
+const POSITION_LMT       = 11742908;
+const POSITION_BROW_LASH = 11742911;
+const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH];
+
+// "Provider Schedule" location — covers all provider rooms/sites (Grandma's House
+// and others), as distinct from "SOM Schedule" and "Leadership Schedule".
+const PROVIDER_LOCATION_ID = 5837840;
 
 const TIMEZONE = 'America/Los_Angeles';
-
-// How far back to look for recent pickups (minutes). GitHub Actions cron is
-// unreliable — the hourly schedule fires every 83–295 min in practice. 360 min
-// covers the worst observed gap. Deduplication in asanaClient prevents double-tasks.
-const LOOKBACK_MINUTES = 360;
 
 let _token = null;
 
@@ -83,14 +83,6 @@ async function apiGet(path) {
   return res.json();
 }
 
-function cutoffTime() {
-  return new Date(Date.now() - LOOKBACK_MINUTES * 60 * 1000);
-}
-
-function isRecent(timestamp) {
-  return timestamp && new Date(timestamp) >= cutoffTime();
-}
-
 function todayKey() {
   return new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 }
@@ -109,33 +101,33 @@ async function getShift(shiftId) {
   return data.shift;
 }
 
-// Returns completed swaps/drops updated within the lookback window.
-// status=3 is auto-completed on this account (manager review is disabled),
-// which covers both one-sided drops and two-sided swaps.
-async function getRecentApprovedSwaps() {
-  const data  = await apiGet(`/swaps?status=3&start=${todayKey()}&end=${futureKey(60)}`);
-  const swaps = data.swaps || [];
-  return swaps.filter(s => isRecent(s.updated_at || s.created_at));
-}
-
-// Returns all shifts account-wide for today through 60 days out, including
-// open (unassigned) shifts. No location filter — open shifts may appear under
-// any location in this account.
+// Returns all currently-assigned shifts for today through 60 days out.
 //
-// The /shifts endpoint silently caps results at ~400 with no pagination
-// support (a `page` param is accepted but ignored) and no total/meta field
-// to detect truncation. A single 60-day query can exceed that cap, which
-// silently dropped a real open shift from detection (missed pickup, 2026-07-01).
+// NOTE: this account's /shifts endpoint never returns genuinely open/unassigned
+// shifts (is_open:true), under any parameter combination — confirmed by
+// exhaustive testing (include_open, is_open, show_open, unassigned, status=open,
+// every location_id individually and combined) against WIW's own schedule
+// export as ground truth. A real open shift can sit unassigned and visible in
+// the app for a month and never once appear via this API. Reported to WIW
+// support; not waiting on them. Detection here is a self-diff of *assigned*
+// shifts across runs (see handler.js) rather than watching for open shifts,
+// since assigned-shift data has always been reliable.
+//
+// The /shifts endpoint also silently caps results at ~400 with no pagination
+// support (a `page` param is accepted but ignored) and no total/meta field to
+// detect truncation — confirmed separately (missed pickup, 2026-07-01).
 // Querying in 7-day chunks keeps each request well under the cap.
 const SHIFT_QUERY_CHUNK_DAYS = 7;
 
-async function getLocationShifts() {
+async function getAssignedShifts() {
   const shiftsById = new Map();
   for (let offset = 0; offset < 60; offset += SHIFT_QUERY_CHUNK_DAYS) {
     const start = futureKey(offset);
     const end   = futureKey(Math.min(offset + SHIFT_QUERY_CHUNK_DAYS, 60));
-    const data  = await apiGet(`/shifts?start=${start}&end=${end}&include_open=true`);
-    for (const s of data.shifts || []) shiftsById.set(s.id, s);
+    const data  = await apiGet(`/shifts?start=${start}&end=${end}&location_id=${PROVIDER_LOCATION_ID}`);
+    for (const s of data.shifts || []) {
+      if (s.user_id && s.user_id !== 0) shiftsById.set(s.id, s);
+    }
   }
   return [...shiftsById.values()];
 }
@@ -159,8 +151,9 @@ function isProvider(user) {
 
 function positionLabel(user) {
   const positions = user.positions || (user.position_id ? [user.position_id] : []);
-  if (positions.includes(POSITION_ESTI)) return 'Esthetician';
-  if (positions.includes(POSITION_LMT))  return 'Massage Therapist';
+  if (positions.includes(POSITION_ESTI))      return 'Esthetician';
+  if (positions.includes(POSITION_LMT))       return 'Massage Therapist';
+  if (positions.includes(POSITION_BROW_LASH)) return 'Brow/Lash Esti';
   return 'Provider';
 }
 
@@ -193,8 +186,8 @@ function shiftHours(shift) {
 
 module.exports = {
   login, getUser, getShift, getUserShiftsOnDate,
-  getRecentApprovedSwaps, getLocationShifts,
+  getAssignedShifts,
   isProvider, positionLabel, todayKey,
   shiftDateKey, formatShiftDate, formatShiftTime, shiftHours,
-  POSITION_ESTI, POSITION_LMT, PROVIDER_POSITION_IDS,
+  POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH, PROVIDER_POSITION_IDS, PROVIDER_LOCATION_ID,
 };

@@ -1,38 +1,44 @@
 /**
  * handler.js
  * Polling orchestrator. Runs on a GitHub Actions cron schedule.
- * Fetches recent WIW shift pickups and creates Asana tasks for each one.
+ *
+ * Detects pickups and trades by diffing this run's currently-assigned WIW
+ * shifts against a snapshot of the last run's assigned shifts, rather than
+ * watching for open shifts directly — this account's /shifts endpoint never
+ * returns genuinely open/unassigned shifts under any parameters (confirmed
+ * against WIW's own schedule export as ground truth; reported to WIW support).
+ * Assigned-shift data has always been reliable, so a self-diff of that is
+ * used instead. This also replaces the old /swaps-based trade detection: a
+ * trade is just "same shift_id, different user_id" in this same diff.
  */
 
 const wiw                        = require('./wiwClient');
 const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask, pickAssignee } = require('./asanaClient');
 const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
 
-async function processDroppedShift(swap, userCache) {
-  const droppingUserId = swap.creator_id;
+// Routine weekly schedule publishing (skin-sage-wiw-publish-weekly-schedule,
+// separate repo) creates a full batch of brand-new, already-assigned shift
+// rows ~23-30 days out every Tuesday. Without this guard, every shift in that
+// batch would look identical to a real pickup (a shift_id never seen before,
+// now assigned) and flood Asana. That job never reassigns an *existing*
+// shift_id — only creates new ones for empty weeks — so trades need no such
+// guard: they're inherently immune since they always involve a shift_id we've
+// already seen.
+const NEAR_TERM_PICKUP_WINDOW_DAYS = 14;
 
-  if (!droppingUserId) {
-    console.log(`  Swap ${swap.id}: missing creator_id, skipping`);
-    return;
-  }
+function isNearTerm(shiftDateKey) {
+  const days = (new Date(`${shiftDateKey}T00:00:00Z`) - new Date(`${wiw.todayKey()}T00:00:00Z`)) / 86400000;
+  return days <= NEAR_TERM_PICKUP_WINDOW_DAYS;
+}
 
-  // On one-sided drops, swap.user_id === creator_id (the dropper). The real picker
-  // is shift.user_id after the swap completes (status=3).
-  const shift = await wiw.getShift(swap.shift_id);
-  const pickingUserId = shift.user_id;
-
-  if (!pickingUserId || pickingUserId === 0 || String(pickingUserId) === String(droppingUserId)) {
-    console.log(`  Swap ${swap.id}: shift not yet reassigned to a different picker, skipping`);
-    return;
-  }
-
+async function processTrade({ droppingUserId, pickingUserId, shift, userCache }) {
   const [pickingUser, droppingUser] = await Promise.all([
     userCache.get(pickingUserId),
     userCache.get(droppingUserId),
   ]);
 
   if (!wiw.isProvider(pickingUser)) {
-    console.log(`  Swap ${swap.id}: picking user ${pickingUser?.first_name} is not Esti/LMT, skipping`);
+    console.log(`  Shift ${shift.id}: picking user ${pickingUser?.first_name} is not a tracked provider position, skipping`);
     return;
   }
 
@@ -54,7 +60,7 @@ async function processDroppedShift(swap, userCache) {
   const isUrgent                  = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
   const assigneeGid               = pickAssignee(isUrgent);
 
-  console.log(`  Swap ${swap.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
+  console.log(`  Trade — shift ${shift.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
 
   const [closeTask, openTask] = await Promise.all([
     createDroppedShiftTask({
@@ -83,11 +89,11 @@ async function processDroppedShift(swap, userCache) {
   if (openTask)  console.log(`    Open-books task:  ${openTask?.data?.permalink_url  || '(no url)'}`);
 }
 
-async function processOpenShiftPickup(shift, userCache) {
+async function processPickup({ shift, userCache }) {
   const user = await userCache.get(shift.user_id);
 
   if (!wiw.isProvider(user)) {
-    console.log(`  Open shift ${shift.id}: user ${user?.first_name} is not Esti/LMT, skipping`);
+    console.log(`  Shift ${shift.id}: user ${user?.first_name} is not a tracked provider position, skipping`);
     return;
   }
 
@@ -103,7 +109,7 @@ async function processOpenShiftPickup(shift, userCache) {
   const isUrgent     = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
   const assigneeGid  = pickAssignee(isUrgent);
 
-  console.log(`  Open shift ${shift.id}: ${name} (${position}), ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
+  console.log(`  Pickup — shift ${shift.id}: ${name} (${position}), ${shiftDisplay} (${hours} hrs)${isUrgent ? ' [URGENT — assigned to Sofie]' : ''}`);
 
   const task = await createOpenShiftTask({
     provider: { name, position },
@@ -128,70 +134,64 @@ function makeUserCache() {
   };
 }
 
+// Builds the snapshot payload for a set of currently-assigned shifts.
+function toSnapshotMap(shifts) {
+  return new Map(shifts.map(s => [s.id, {
+    userId:     s.user_id,
+    shiftDate:  wiw.shiftDateKey(s),
+    startTime:  s.start_time,
+    endTime:    s.end_time,
+    positionId: s.position_id,
+  }]));
+}
+
 async function main() {
-  console.log(`[${new Date().toISOString()}] Polling WIW for recent shift pickups...`);
+  console.log(`[${new Date().toISOString()}] Polling WIW for recent shift pickups and trades...`);
 
   await wiw.login();
   const userCache = makeUserCache();
 
-  // --- Dropped shifts (swaps) ---
-  const swaps = await wiw.getRecentApprovedSwaps();
-  console.log(`Found ${swaps.length} recent approved swap(s).`);
-  for (const swap of swaps) {
-    try { await processDroppedShift(swap, userCache); }
-    catch (err) { console.error(`  Swap ${swap.id}: ERROR - ${err.message}`); }
+  const { assigned: previous, sha, isFirstRun } = await loadSnapshot();
+  const currentShifts = await wiw.getAssignedShifts();
+  console.log(`Fetched ${currentShifts.length} currently-assigned shift(s).`);
+
+  if (isFirstRun) {
+    await saveSnapshot(toSnapshotMap(currentShifts), sha);
+    console.log(`First run — saved baseline snapshot of ${currentShifts.length} shift(s), no tasks created.`);
+    return;
   }
 
-  // --- Open shift pickups (accumulated watch-list diff) ---
-  // We watch every shift ever seen unassigned — not just the ones seen on the
-  // immediately preceding run — so a gap in any single run (failed WIW login,
-  // transient API error, a truncated query) can't cause a permanent miss. A
-  // shift stays watched until a run sees it assigned and successfully creates
-  // its task, or its date passes unfilled. See snapshotClient.js for why.
-  // We don't rely on openshift_approval_request_id because this account auto-assigns
-  // without creating an approval request record.
-  const snapshot  = await loadSnapshot();
-  const watched   = snapshot.watched;
-  const allShifts = await wiw.getLocationShifts();
-  const byId      = new Map(allShifts.map(s => [s.id, s]));
-  const todayKey  = wiw.todayKey();
+  const trades  = [];
+  const pickups = [];
 
-  const pickedUp = [];
-  for (const [id, info] of watched) {
-    const shift = byId.get(id);
-    if (!shift) {
-      // Aged out of the 60-day window (or deleted) without ever being picked up.
-      // Only prune once its date has passed, in case this is just a transient
-      // gap in this run's query rather than a real disappearance.
-      if (info.shiftDate && info.shiftDate < todayKey) {
-        console.log(`  Shift ${id}: aged out unfilled (was ${info.shiftDate}), removing from watch`);
-        watched.delete(id);
+  for (const shift of currentShifts) {
+    const prev = previous.get(shift.id);
+    if (!prev) {
+      const shiftDate = wiw.shiftDateKey(shift);
+      if (isNearTerm(shiftDate)) {
+        pickups.push(shift);
+      } else {
+        console.log(`  Shift ${shift.id}: newly-assigned but ${shiftDate} is beyond the ${NEAR_TERM_PICKUP_WINDOW_DAYS}-day window (likely routine weekly publish), tracking only`);
       }
-      continue;
-    }
-    if (!info.shiftDate) info.shiftDate = wiw.shiftDateKey(shift); // backfill for migrated entries
-    if (shift.user_id && shift.user_id !== 0) pickedUp.push(shift);
-  }
-
-  console.log(`Watching ${watched.size} open shift(s) (accumulated) — ${pickedUp.length} picked up this run.`);
-
-  for (const shift of pickedUp) {
-    try {
-      await processOpenShiftPickup(shift, userCache);
-      watched.delete(shift.id); // handled — stop watching
-    } catch (err) {
-      console.error(`  Shift ${shift.id}: ERROR - ${err.message} (staying watched, will retry next run)`);
+    } else if (prev.userId !== shift.user_id) {
+      trades.push({ shift, droppingUserId: prev.userId, pickingUserId: shift.user_id });
     }
   }
 
-  for (const shift of allShifts) {
-    if ((!shift.user_id || shift.user_id === 0) && !watched.has(shift.id)) {
-      watched.set(shift.id, { firstSeenAt: new Date().toISOString(), shiftDate: wiw.shiftDateKey(shift) });
-    }
+  console.log(`Found ${trades.length} trade(s) and ${pickups.length} near-term pickup(s).`);
+
+  for (const { shift, droppingUserId, pickingUserId } of trades) {
+    try { await processTrade({ droppingUserId, pickingUserId, shift, userCache }); }
+    catch (err) { console.error(`  Shift ${shift.id}: ERROR - ${err.message}`); }
   }
 
-  await saveSnapshot(watched, snapshot.sha);
-  console.log(`Snapshot updated: watching ${watched.size} open shift(s).`);
+  for (const shift of pickups) {
+    try { await processPickup({ shift, userCache }); }
+    catch (err) { console.error(`  Shift ${shift.id}: ERROR - ${err.message}`); }
+  }
+
+  await saveSnapshot(toSnapshotMap(currentShifts), sha);
+  console.log(`Snapshot updated: tracking ${currentShifts.length} assigned shift(s).`);
 
   console.log('Done.');
 }

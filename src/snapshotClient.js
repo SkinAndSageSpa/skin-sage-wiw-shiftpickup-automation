@@ -1,25 +1,19 @@
 /**
  * snapshotClient.js
- * Persists the set of open (unassigned) shifts we're watching for pickup,
- * accumulated across runs — not just the immediately preceding one.
+ * Persists the set of currently-*assigned* shifts from the last run, so
+ * handler.js can diff this run's roster against it to detect pickups and
+ * trades — see handler.js for why this replaced watching for open shifts.
  *
- * Why accumulate instead of overwrite: the original design compared only
- * against the single most recent run's snapshot. If any one run failed to
- * record a shift as unassigned (a truncated query, a failed WIW login, a
- * missed cron tick), that shift's "unassigned" sighting was gone for good —
- * the diff could never catch it becoming assigned no matter how long it sat
- * open. Confirmed root cause of 3 missed pickups (Saralyn->Amber 2026-06-28,
- * Priscilla 2026-07-20, Katie Bennett 2026-07-29). Accumulating means a shift
- * stays watched from the first run that ever sees it open until the run that
- * detects it picked up and successfully creates the task — any number of
- * failed/gappy runs in between are harmless.
+ * Unlike the old open-shift watch-list, this doesn't need to accumulate
+ * across runs or survive gaps: assigned-shift data has always been reliable
+ * via the API, so each run's fetch is simply the new truth, wholesale.
  *
- * State is stored as state/open-shifts-snapshot.json in this repo via the
+ * State is stored as state/assigned-shifts-snapshot.json in this repo via the
  * GitHub Contents API using the GITHUB_TOKEN that Actions provides automatically.
  */
 
 const GITHUB_API    = 'https://api.github.com';
-const SNAPSHOT_PATH = 'state/open-shifts-snapshot.json';
+const SNAPSHOT_PATH = 'state/assigned-shifts-snapshot.json';
 
 function headers() {
   const token = process.env.GITHUB_TOKEN;
@@ -42,31 +36,23 @@ async function loadSnapshot() {
   const res = await fetch(repoUrl(), { headers: headers() });
   if (res.status === 404) {
     console.log('  No snapshot found — first run, will save baseline.');
-    return { watched: new Map(), sha: null };
+    return { assigned: new Map(), sha: null, isFirstRun: true };
   }
   if (!res.ok) throw new Error(`Failed to load snapshot: HTTP ${res.status}`);
   const file    = await res.json();
   const content = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
 
-  // Migrate from the old single-hop format ({ unassignedIds: [...] }), which
-  // carries no per-shift first-seen/date info — treat any surviving entries
-  // as freshly seen so they re-enter accumulation going forward.
-  if (Array.isArray(content.unassignedIds)) {
-    const watched = new Map(content.unassignedIds.map(id => [id, { firstSeenAt: content.capturedAt || new Date().toISOString(), shiftDate: null }]));
-    return { watched, sha: file.sha };
-  }
-
-  const watched = new Map(Object.entries(content.watched || {}).map(([id, v]) => [Number(id), v]));
-  return { watched, sha: file.sha };
+  const assigned = new Map(Object.entries(content.assigned || {}).map(([id, v]) => [Number(id), v]));
+  return { assigned, sha: file.sha, isFirstRun: false };
 }
 
-async function saveSnapshot(watched, existingSha) {
+async function saveSnapshot(assigned, existingSha) {
   const payload = {
     capturedAt: new Date().toISOString(),
-    watched:    Object.fromEntries(watched),
+    assigned:   Object.fromEntries(assigned),
   };
   const body = {
-    message: 'chore: update open shifts snapshot [skip ci]',
+    message: 'chore: update assigned shifts snapshot [skip ci]',
     content: Buffer.from(JSON.stringify(payload, null, 2)).toString('base64'),
   };
   if (existingSha) body.sha = existingSha;

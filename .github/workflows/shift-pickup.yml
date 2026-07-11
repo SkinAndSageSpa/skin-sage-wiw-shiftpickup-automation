@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: write  # required to read/write the open-shifts snapshot file
+      contents: write  # required to read/write the assigned-shifts snapshot file
 
     steps:
       - name: Checkout repository
