@@ -1,20 +1,6 @@
 {
-  "capturedAt": "2026-07-13T06:19:17.663Z",
+  "capturedAt": "2026-07-13T10:26:20.154Z",
   "assigned": {
-    "3796097474": {
-      "userId": 52119777,
-      "shiftDate": "2026-07-12",
-      "startTime": "Sun, 12 Jul 2026 13:00:00 -0700",
-      "endTime": "Sun, 12 Jul 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3796097484": {
-      "userId": 52119777,
-      "shiftDate": "2026-07-12",
-      "startTime": "Sun, 12 Jul 2026 09:15:00 -0700",
-      "endTime": "Sun, 12 Jul 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
     "3800533670": {
       "userId": 53109620,
       "shiftDate": "2026-07-19",
