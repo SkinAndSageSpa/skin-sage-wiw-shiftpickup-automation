@@ -38,6 +38,19 @@ function shortDate(shiftDate) {
   return `${parseInt(m)}/${parseInt(d)}`;
 }
 
+// Task names double as the dedup key (see taskExists()), so two different
+// shifts for the same person on the same day must not collide. Without a
+// time in the name, a same-day double pickup/drop (confirmed: Ana picking
+// up both of Steph's shifts on 2026-08-18/19) either silently skips the
+// second task entirely (if the first is already searchable when the second
+// dedup check runs) or creates two identically-named tasks that are
+// impossible to tell apart in a task list (confirmed: 2026-08-24, both
+// created, only one actually actioned in Mangomint).
+function shortStartTime(shiftDisplay) {
+  const m = shiftDisplay.match(/(\d{1,2}:\d{2}[ap]m)-/);
+  return m ? m[1] : '';
+}
+
 async function getWorkspaceGid() {
   if (_workspaceGid) return _workspaceGid;
   const res  = await fetch(`${ASANA_BASE_URL}/projects/${SPA_OPERATIONS_PROJECT_GID}?opt_fields=workspace`, { headers: getHeaders() });
@@ -89,7 +102,7 @@ async function createDroppedShiftTask({
   now,
 }) {
   const firstName = droppingProvider.name.split(' ')[0];
-  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Drop`;
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} ${shortStartTime(shiftDisplay)} Shift Drop`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
@@ -133,7 +146,7 @@ async function createOpenShiftTask({
   now,
 }) {
   const firstName = provider.name.split(' ')[0];
-  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} ${shortStartTime(shiftDisplay)} Shift Pickup`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
@@ -180,7 +193,7 @@ async function createDropPickupTask({
   now,
 }) {
   const firstName = pickingProvider.name.split(' ')[0];
-  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} Shift Pickup`;
+  const name  = `Update Mangomint Work Hours for ${firstName}'s ${shortDate(shiftDate)} ${shortStartTime(shiftDisplay)} Shift Pickup`;
   const today = formatDate(now);
 
   if (await taskExists(name)) {
