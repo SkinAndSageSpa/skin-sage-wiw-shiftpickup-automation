@@ -13,7 +13,11 @@ const LOGIN_URL = 'https://api.login.wheniwork.com/login';
 // === Account-specific IDs (skinandsagespa.com WIW account, May 2026) ===
 const POSITION_ESTI      = 11742907;
 const POSITION_LMT       = 11742908;
-const POSITION_BROW_LASH = 11742911;
+// Was 11742911, which the live /positions endpoint identifies as "Spa
+// Operations Manager" — not a provider position. 11742906 is the real
+// "Brow  Lash Esti" position (confirmed 2026-08-13); the wrong ID meant
+// Naomi Hughes and Julie Do's pickups/trades never generated Asana tasks.
+const POSITION_BROW_LASH = 11742906;
 const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH];
 
 // "Provider Schedule" location — covers all provider rooms/sites (Grandma's House
