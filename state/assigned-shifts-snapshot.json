@@ -1,13 +1,6 @@
 {
-  "capturedAt": "2026-08-14T06:13:27.132Z",
+  "capturedAt": "2026-08-14T08:15:13.853Z",
   "assigned": {
-    "3816910843": {
-      "userId": 52268300,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
     "3816910845": {
       "userId": 52119786,
       "shiftDate": "2026-08-15",
@@ -22,26 +15,12 @@
       "endTime": "Sat, 15 Aug 2026 16:45:00 -0700",
       "positionId": 11742908
     },
-    "3816910849": {
-      "userId": 52119785,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
     "3816910851": {
       "userId": 52119789,
       "shiftDate": "2026-08-15",
       "startTime": "Sat, 15 Aug 2026 13:00:00 -0700",
       "endTime": "Sat, 15 Aug 2026 16:45:00 -0700",
       "positionId": 11742908
-    },
-    "3816910852": {
-      "userId": 52804757,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 09:15:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "positionId": 11742907
     },
     "3816910855": {
       "userId": 52268300,
@@ -50,25 +29,11 @@
       "endTime": "Sat, 15 Aug 2026 16:45:00 -0700",
       "positionId": 11742907
     },
-    "3816910856": {
-      "userId": 52268300,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 09:15:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
     "3816910861": {
       "userId": 52119786,
       "shiftDate": "2026-08-15",
       "startTime": "Sat, 15 Aug 2026 09:15:00 -0700",
       "endTime": "Sat, 15 Aug 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3816910863": {
-      "userId": 52119785,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 09:15:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 13:00:00 -0700",
       "positionId": 11742908
     },
     "3816910865": {
@@ -190,13 +155,6 @@
       "endTime": "Sun, 16 Aug 2026 16:45:00 -0700",
       "positionId": 11742908
     },
-    "3816911058": {
-      "userId": 52119777,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 20:30:00 -0700",
-      "positionId": 11742907
-    },
     "3816911060": {
       "userId": 52119777,
       "shiftDate": "2026-08-16",
@@ -218,25 +176,11 @@
       "endTime": "Sun, 16 Aug 2026 13:00:00 -0700",
       "positionId": 11742906
     },
-    "3816911068": {
-      "userId": 52119789,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 20:30:00 -0700",
-      "positionId": 11742908
-    },
     "3816911071": {
       "userId": 53361040,
       "shiftDate": "2026-08-16",
       "startTime": "Sun, 16 Aug 2026 09:15:00 -0700",
       "endTime": "Sun, 16 Aug 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3816911072": {
-      "userId": 52576868,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 20:30:00 -0700",
       "positionId": 11742908
     },
     "3816911074": {
@@ -246,25 +190,11 @@
       "endTime": "Sun, 16 Aug 2026 13:00:00 -0700",
       "positionId": 11742908
     },
-    "3816911075": {
-      "userId": 52576868,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
     "3816911077": {
       "userId": 53109620,
       "shiftDate": "2026-08-16",
       "startTime": "Sun, 16 Aug 2026 09:15:00 -0700",
       "endTime": "Sun, 16 Aug 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3816911078": {
-      "userId": 52119777,
-      "shiftDate": "2026-08-13",
-      "startTime": "Thu, 13 Aug 2026 13:00:00 -0700",
-      "endTime": "Thu, 13 Aug 2026 16:45:00 -0700",
       "positionId": 11742907
     },
     "3821093547": {
