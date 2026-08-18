@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-08-18T22:23:01.688Z",
+  "capturedAt": "2026-08-18T23:21:49.631Z",
   "assigned": {
     "3821093547": {
       "userId": 52576868,
@@ -132,6 +132,13 @@
       "shiftDate": "2026-08-18",
       "startTime": "Tue, 18 Aug 2026 09:15:00 -0700",
       "endTime": "Tue, 18 Aug 2026 13:00:00 -0700",
+      "positionId": 11742907
+    },
+    "3821093576": {
+      "userId": 52119782,
+      "shiftDate": "2026-08-22",
+      "startTime": "Sat, 22 Aug 2026 09:15:00 -0700",
+      "endTime": "Sat, 22 Aug 2026 13:00:00 -0700",
       "positionId": 11742907
     },
     "3821093577": {
@@ -440,6 +447,13 @@
       "shiftDate": "2026-08-28",
       "startTime": "Fri, 28 Aug 2026 13:00:00 -0700",
       "endTime": "Fri, 28 Aug 2026 16:45:00 -0700",
+      "positionId": 11742907
+    },
+    "3825445222": {
+      "userId": 52119782,
+      "shiftDate": "2026-08-26",
+      "startTime": "Wed, 26 Aug 2026 13:00:00 -0700",
+      "endTime": "Wed, 26 Aug 2026 16:45:00 -0700",
       "positionId": 11742907
     },
     "3825445224": {
