@@ -15,6 +15,7 @@
 const wiw                        = require('./wiwClient');
 const { createDroppedShiftTask, createOpenShiftTask, createDropPickupTask, pickAssignee } = require('./asanaClient');
 const { loadSnapshot, saveSnapshot }                  = require('./snapshotClient');
+const { loadKnownProviders, saveKnownProviders }      = require('./knownProvidersClient');
 
 // Routine weekly schedule publishing (skin-sage-wiw-publish-weekly-schedule,
 // separate repo) creates a full batch of brand-new, already-assigned shift
@@ -33,6 +34,14 @@ const { loadSnapshot, saveSnapshot }                  = require('./snapshotClien
 // since it was never part of a batch to begin with. Requiring both signals
 // means a near-term pickup is never suppressed even if it happens to land in
 // the same run as a real batch-publish.
+//
+// Exception: a brand-new hire's first published week of shifts matches this
+// exact batch profile (their whole recurring schedule lands at once, far
+// out), but the "someone already handles Mangomint for routine publishes"
+// assumption doesn't hold for them — nobody has entered their schedule into
+// Mangomint before. See knownProvidersClient.js: the guard only suppresses
+// for a user_id already seen in a prior run; a never-before-seen user_id
+// still gets individual pickup tasks even if it matches the batch profile.
 const BATCH_SIZE_THRESHOLD  = 8;  // this many+ newly-seen shifts in one run looks like a publish batch, not individual pickups
 const BATCH_MIN_DAYS_OUT    = 18; // safely under the ~23-30 day horizon the publish job actually targets
 
@@ -160,14 +169,24 @@ async function main() {
   await wiw.login();
   const userCache = makeUserCache();
 
-  const { assigned: previous, sha, isFirstRun } = await loadSnapshot();
+  const { assigned: previous, sha, isFirstRun }                            = await loadSnapshot();
+  const { known: knownProviders, sha: knownSha, isFirstRun: knownIsFirstRun } = await loadKnownProviders();
   const currentShifts = await wiw.getAssignedShifts();
   console.log(`Fetched ${currentShifts.length} currently-assigned shift(s).`);
 
   if (isFirstRun) {
     await saveSnapshot(toSnapshotMap(currentShifts), sha);
+    await saveKnownProviders(new Set(currentShifts.map(s => s.user_id)), knownSha);
     console.log(`First run — saved baseline snapshot of ${currentShifts.length} shift(s), no tasks created.`);
     return;
+  }
+
+  // known-providers.json didn't exist before this feature shipped — bootstrap
+  // it from the current roster so existing staff already mid-tenure aren't
+  // mistaken for a new hire the first time the guard runs post-deploy.
+  if (knownIsFirstRun) {
+    for (const s of currentShifts) knownProviders.add(s.user_id);
+    console.log(`Known-providers file initialized with ${knownProviders.size} existing provider(s).`);
   }
 
   const trades    = [];
@@ -184,13 +203,21 @@ async function main() {
 
   // Only suppress a newly-seen shift when it matches BOTH signals of the
   // weekly-publish batch's actual profile — see comment above BATCH_SIZE_THRESHOLD.
+  // A user_id never seen in a prior run bypasses suppression regardless —
+  // see the new-hire exception in that same comment.
   const looksLikeBatch = newlySeen.length >= BATCH_SIZE_THRESHOLD;
   const pickups = [];
   for (const shift of newlySeen) {
-    const shiftDate = wiw.shiftDateKey(shift);
-    if (looksLikeBatch && daysOut(shiftDate) >= BATCH_MIN_DAYS_OUT) {
+    const shiftDate       = wiw.shiftDateKey(shift);
+    const isNewHire       = !knownProviders.has(shift.user_id);
+    const matchesBatchProfile = looksLikeBatch && daysOut(shiftDate) >= BATCH_MIN_DAYS_OUT;
+
+    if (matchesBatchProfile && !isNewHire) {
       console.log(`  Shift ${shift.id}: newly-assigned, part of a ${newlySeen.length}-shift batch and ${shiftDate} is far out — treating as routine weekly publish, tracking only`);
     } else {
+      if (matchesBatchProfile && isNewHire) {
+        console.log(`  Shift ${shift.id}: matches the batch-publish profile, but user ${shift.user_id} has never been seen before — treating as a new-hire pickup instead of suppressing`);
+      }
       pickups.push(shift);
     }
   }
@@ -209,6 +236,10 @@ async function main() {
 
   await saveSnapshot(toSnapshotMap(currentShifts), sha);
   console.log(`Snapshot updated: tracking ${currentShifts.length} assigned shift(s).`);
+
+  for (const s of currentShifts) knownProviders.add(s.user_id);
+  await saveKnownProviders(knownProviders, knownSha);
+  console.log(`Known-providers updated: tracking ${knownProviders.size} provider(s) ever seen.`);
 
   console.log('Done.');
 }
