@@ -1,18 +1,11 @@
 {
-  "capturedAt": "2026-09-03T03:14:07.775Z",
+  "capturedAt": "2026-09-03T08:35:32.565Z",
   "assigned": {
     "3829675910": {
       "userId": 52119789,
       "shiftDate": "2026-09-04",
       "startTime": "Fri, 04 Sep 2026 13:00:00 -0700",
       "endTime": "Fri, 04 Sep 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3829675911": {
-      "userId": 52576877,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 16:45:00 -0700",
       "positionId": 11742908
     },
     "3829675913": {
@@ -36,25 +29,11 @@
       "endTime": "Fri, 04 Sep 2026 16:45:00 -0700",
       "positionId": 11742907
     },
-    "3829675920": {
-      "userId": 52268300,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
     "3829675924": {
       "userId": 52119777,
       "shiftDate": "2026-09-06",
       "startTime": "Sun, 06 Sep 2026 13:00:00 -0700",
       "endTime": "Sun, 06 Sep 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3829675926": {
-      "userId": 52268300,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 09:15:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 13:00:00 -0700",
       "positionId": 11742907
     },
     "3829675930": {
@@ -63,13 +42,6 @@
       "startTime": "Fri, 04 Sep 2026 09:15:00 -0700",
       "endTime": "Fri, 04 Sep 2026 13:00:00 -0700",
       "positionId": 11742907
-    },
-    "3829675931": {
-      "userId": 52119785,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 09:15:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "positionId": 11742908
     },
     "3829675933": {
       "userId": 52576877,
@@ -92,13 +64,6 @@
       "endTime": "Sun, 06 Sep 2026 16:45:00 -0700",
       "positionId": 11742908
     },
-    "3829675941": {
-      "userId": 52576877,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 09:15:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
     "3829675944": {
       "userId": 52119789,
       "shiftDate": "2026-09-06",
@@ -111,13 +76,6 @@
       "shiftDate": "2026-09-04",
       "startTime": "Fri, 04 Sep 2026 09:15:00 -0700",
       "endTime": "Fri, 04 Sep 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3829675946": {
-      "userId": 52119782,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 09:15:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 13:00:00 -0700",
       "positionId": 11742907
     },
     "3829675948": {
@@ -288,47 +246,12 @@
       "endTime": "Fri, 04 Sep 2026 20:30:00 -0700",
       "positionId": 11742907
     },
-    "3829676021": {
-      "userId": 52950127,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 20:30:00 -0700",
-      "positionId": 11742907
-    },
-    "3829676027": {
-      "userId": 52119789,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 20:30:00 -0700",
-      "positionId": 11742908
-    },
     "3829676029": {
       "userId": 52119786,
       "shiftDate": "2026-09-04",
       "startTime": "Fri, 04 Sep 2026 16:45:00 -0700",
       "endTime": "Fri, 04 Sep 2026 20:30:00 -0700",
       "positionId": 11742908
-    },
-    "3829676030": {
-      "userId": 53109620,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 20:30:00 -0700",
-      "positionId": 11742907
-    },
-    "3829676033": {
-      "userId": 52119785,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3829676037": {
-      "userId": 53109620,
-      "shiftDate": "2026-09-02",
-      "startTime": "Wed, 02 Sep 2026 13:00:00 -0700",
-      "endTime": "Wed, 02 Sep 2026 16:45:00 -0700",
-      "positionId": 11742907
     },
     "3833780300": {
       "userId": 52119789,
