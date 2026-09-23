@@ -20,9 +20,16 @@ const POSITION_LMT       = 11742908;
 const POSITION_BROW_LASH = 11742906;
 const PROVIDER_POSITION_IDS = [POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH];
 
-// "Provider Schedule" location — covers all provider rooms/sites (Grandma's House
-// and others), as distinct from "SOM Schedule" and "Leadership Schedule".
-const PROVIDER_LOCATION_ID = 5837840;
+// Skin & Sage runs two Provider WIW locations (confirmed via /locations,
+// 2026-09-19): Ravenna (the original, was plain "Provider Schedule" until
+// renamed) and Queen Anne, added the same day. Each covers all provider
+// rooms/sites at that site, as distinct from "SOM Schedule" and "Leadership
+// Schedule". /shifts takes one location_id per call, so getAssignedShifts()
+// below queries each location separately and merges results.
+const LOCATIONS = [
+  { key: 'ravenna',   label: 'Ravenna',    locationId: 5837840 },
+  { key: 'queenanne', label: 'Queen Anne', locationId: 5948856 },
+];
 
 const TIMEZONE = 'America/Los_Angeles';
 
@@ -125,12 +132,16 @@ const SHIFT_QUERY_CHUNK_DAYS = 7;
 
 async function getAssignedShifts() {
   const shiftsById = new Map();
-  for (let offset = 0; offset < 60; offset += SHIFT_QUERY_CHUNK_DAYS) {
-    const start = futureKey(offset);
-    const end   = futureKey(Math.min(offset + SHIFT_QUERY_CHUNK_DAYS, 60));
-    const data  = await apiGet(`/shifts?start=${start}&end=${end}&location_id=${PROVIDER_LOCATION_ID}`);
-    for (const s of data.shifts || []) {
-      if (s.user_id && s.user_id !== 0) shiftsById.set(s.id, s);
+  for (const location of LOCATIONS) {
+    for (let offset = 0; offset < 60; offset += SHIFT_QUERY_CHUNK_DAYS) {
+      const start = futureKey(offset);
+      const end   = futureKey(Math.min(offset + SHIFT_QUERY_CHUNK_DAYS, 60));
+      const data  = await apiGet(`/shifts?start=${start}&end=${end}&location_id=${location.locationId}`);
+      for (const s of data.shifts || []) {
+        // Shift ids are unique across the whole WIW account, not per-location,
+        // so a plain Map merge across locations is safe here.
+        if (s.user_id && s.user_id !== 0) shiftsById.set(s.id, { ...s, locationLabel: location.label });
+      }
     }
   }
   return [...shiftsById.values()];
@@ -193,5 +204,5 @@ module.exports = {
   getAssignedShifts,
   isProvider, positionLabel, todayKey,
   shiftDateKey, formatShiftDate, formatShiftTime, shiftHours,
-  POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH, PROVIDER_POSITION_IDS, PROVIDER_LOCATION_ID,
+  POSITION_ESTI, POSITION_LMT, POSITION_BROW_LASH, PROVIDER_POSITION_IDS, LOCATIONS,
 };
