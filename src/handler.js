@@ -88,6 +88,7 @@ async function processTrade({ droppingUserId, pickingUserId, shift, userCache })
       shiftDisplay,
       shiftHours: hours,
       droppingHasRemainingShift,
+      location: shift.locationLabel,
       assigneeGid,
       now: new Date(),
     }),
@@ -98,6 +99,7 @@ async function processTrade({ droppingUserId, pickingUserId, shift, userCache })
       shiftDisplay,
       shiftHours: hours,
       isBackToBack: pickingIsBackToBack,
+      location: shift.locationLabel,
       assigneeGid,
       now: new Date(),
     }),
@@ -135,6 +137,7 @@ async function processPickup({ shift, userCache }) {
     shiftDisplay,
     shiftHours: hours,
     isBackToBack,
+    location: shift.locationLabel,
     assigneeGid,
     now: new Date(),
   });
