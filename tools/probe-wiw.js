@@ -50,8 +50,8 @@ async function main() {
     console.log(`  swap_id=${s.id}  shift_id=${s.shift_id}  creator_id=${s.creator_id}  user_id=${s.user_id}  updated_at=${s.updated_at}`);
   }
 
-  // Open shift pickups
-  const shiftData = await fetchWIW(`/shifts?start=${date}&end=${end60}&location_id=${wiw.PROVIDER_LOCATION_ID}`);
+  // Open shift pickups (Ravenna only — pass a second location_id manually to probe Queen Anne)
+  const shiftData = await fetchWIW(`/shifts?start=${date}&end=${end60}&location_id=${wiw.LOCATIONS[0].locationId}`);
   const allShifts = shiftData.shifts || [];
   const openPickups = allShifts.filter(s => s.user_id && s.user_id !== 0 && s.openshift_approval_request_id > 0);
   console.log(`\n=== Open shift pickups (openshift_approval_request_id > 0): ${openPickups.length} ===`);
