@@ -98,6 +98,7 @@ async function createDroppedShiftTask({
   shiftDisplay,
   shiftHours,
   droppingHasRemainingShift,
+  location,
   assigneeGid,
   now,
 }) {
@@ -111,8 +112,8 @@ async function createDroppedShiftTask({
   }
 
   const removeStep = droppingHasRemainingShift
-    ? `3. Remove ${droppingProvider.name}'s shift on ${shiftDate}: ${shiftDisplay} (${shiftHours} hrs) — adjust hours only, do not mark "Not Working."`
-    : `3. Remove ${droppingProvider.name}'s shift on ${shiftDate}: ${shiftDisplay} (${shiftHours} hrs) — mark schedule as "Not Working."`;
+    ? `4. Remove ${droppingProvider.name}'s shift on ${shiftDate}: ${shiftDisplay} (${shiftHours} hrs) — adjust hours only, do not mark "Not Working."`
+    : `4. Remove ${droppingProvider.name}'s shift on ${shiftDate}: ${shiftDisplay} (${shiftHours} hrs) — mark schedule as "Not Working."`;
 
   return createTask({
     name,
@@ -123,7 +124,8 @@ async function createDroppedShiftTask({
       '',
       'Action Required:',
       `1. Login to Skin & Sage Mangomint.`,
-      `2. Apps --> Staff --> ${droppingProvider.name} --> Work Hours.`,
+      `2. Apps --> Staff. Set the Location dropdown (top-left) to "${location}".`,
+      `3. Click ${droppingProvider.name} --> Work Hours.`,
       removeStep,
     ].join('\n'),
     dueDate: today,
@@ -142,6 +144,7 @@ async function createOpenShiftTask({
   shiftDisplay,
   shiftHours,
   isBackToBack,
+  location,
   assigneeGid,
   now,
 }) {
@@ -156,11 +159,12 @@ async function createOpenShiftTask({
 
   const steps = [
     `1. Login to Skin & Sage Mangomint.`,
-    `2. Apps --> Staff --> ${provider.name} --> Work Hours.`,
-    `3. Adjust ${provider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
+    `2. Apps --> Staff. Set the Location dropdown (top-left) to "${location}".`,
+    `3. Click ${provider.name} --> Work Hours.`,
+    `4. Adjust ${provider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
   ];
   if (isBackToBack) {
-    steps.push(`4. ${provider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
+    steps.push(`5. ${provider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
   }
 
   return createTask({
@@ -189,6 +193,7 @@ async function createDropPickupTask({
   shiftDisplay,
   shiftHours,
   isBackToBack,
+  location,
   assigneeGid,
   now,
 }) {
@@ -203,11 +208,12 @@ async function createDropPickupTask({
 
   const steps = [
     `1. Login to Skin & Sage Mangomint.`,
-    `2. Apps --> Staff --> ${pickingProvider.name} --> Work Hours.`,
-    `3. Adjust ${pickingProvider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
+    `2. Apps --> Staff. Set the Location dropdown (top-left) to "${location}".`,
+    `3. Click ${pickingProvider.name} --> Work Hours.`,
+    `4. Adjust ${pickingProvider.name}'s schedule to reflect the picked-up shift: ${shiftDisplay} (${shiftHours} hrs).`,
   ];
   if (isBackToBack) {
-    steps.push(`4. ${pickingProvider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
+    steps.push(`5. ${pickingProvider.name} is now working 2 shifts back-to-back on ${shiftDate}. Add a 30-min break at 1:00 PM or 4:45 PM.`);
   }
 
   return createTask({
