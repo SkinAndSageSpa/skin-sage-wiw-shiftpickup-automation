@@ -1,41 +1,6 @@
 {
-  "capturedAt": "2026-10-04T02:25:37.566Z",
+  "capturedAt": "2026-10-04T09:23:43.409Z",
   "assigned": {
-    "3847033043": {
-      "userId": 52950127,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3847033053": {
-      "userId": 52268300,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3847033057": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3847033065": {
-      "userId": 52119786,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3847033069": {
-      "userId": 52119783,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
     "3847033107": {
       "userId": 52119777,
       "shiftDate": "2026-10-04",
@@ -104,27 +69,6 @@
       "shiftDate": "2026-10-04",
       "startTime": "Sun, 04 Oct 2026 09:15:00 -0700",
       "endTime": "Sun, 04 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3847033172": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3847033175": {
-      "userId": 52119786,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3847033178": {
-      "userId": 52119783,
-      "shiftDate": "2026-10-03",
-      "startTime": "Sat, 03 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 03 Oct 2026 16:45:00 -0700",
       "positionId": 11742907
     },
     "3854989811": {
