@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-06T13:57:17.478Z",
+  "capturedAt": "2026-10-06T19:22:42.605Z",
   "assigned": {
     "3854989811": {
       "userId": 52268300,
@@ -1883,6 +1883,62 @@
       "startTime": "Wed, 28 Oct 2026 16:45:00 -0700",
       "endTime": "Wed, 28 Oct 2026 20:30:00 -0700",
       "positionId": 11742908
+    },
+    "3866919187": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-08",
+      "startTime": "Thu, 08 Oct 2026 16:45:00 -0700",
+      "endTime": "Thu, 08 Oct 2026 20:30:00 -0700",
+      "positionId": 11742907
+    },
+    "3866919194": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-08",
+      "startTime": "Thu, 08 Oct 2026 13:00:00 -0700",
+      "endTime": "Thu, 08 Oct 2026 16:45:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921169": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-15",
+      "startTime": "Thu, 15 Oct 2026 16:45:00 -0700",
+      "endTime": "Thu, 15 Oct 2026 20:30:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921171": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-15",
+      "startTime": "Thu, 15 Oct 2026 13:00:00 -0700",
+      "endTime": "Thu, 15 Oct 2026 16:45:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921525": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-22",
+      "startTime": "Thu, 22 Oct 2026 16:45:00 -0700",
+      "endTime": "Thu, 22 Oct 2026 20:30:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921527": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-22",
+      "startTime": "Thu, 22 Oct 2026 13:00:00 -0700",
+      "endTime": "Thu, 22 Oct 2026 16:45:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921700": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-29",
+      "startTime": "Thu, 29 Oct 2026 16:45:00 -0700",
+      "endTime": "Thu, 29 Oct 2026 20:30:00 -0700",
+      "positionId": 11742907
+    },
+    "3866921704": {
+      "userId": 53109620,
+      "shiftDate": "2026-10-29",
+      "startTime": "Thu, 29 Oct 2026 13:00:00 -0700",
+      "endTime": "Thu, 29 Oct 2026 16:45:00 -0700",
+      "positionId": 11742907
     }
   }
 }
