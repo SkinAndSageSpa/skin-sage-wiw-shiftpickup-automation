@@ -1,0 +1,25 @@
+name: WIW Check Locations (Read-Only)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Check per-location shift queries
+        env:
+          WIW_API_KEY:  ${{ secrets.WIW_API_KEY }}
+          WIW_EMAIL:    ${{ secrets.WIW_EMAIL }}
+          WIW_PASSWORD: ${{ secrets.WIW_PASSWORD }}
+        run: node tools/check-locations.js
