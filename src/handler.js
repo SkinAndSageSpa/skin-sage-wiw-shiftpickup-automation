@@ -45,6 +45,13 @@ const { loadKnownProviders, saveKnownProviders }      = require('./knownProvider
 const BATCH_SIZE_THRESHOLD  = 8;  // this many+ newly-seen shifts in one run looks like a publish batch, not individual pickups
 const BATCH_MIN_DAYS_OUT    = 18; // safely under the ~23-30 day horizon the publish job actually targets
 
+// Short shifts are trainings, not bookable time — Mangomint books stay closed
+// for them, so no Asana task (Morgan, 2026-10-10). A standard shift is 3.75h;
+// trainings are ~1h. Also ignored when deciding "remaining shift that day" /
+// back-to-back, since a training doesn't keep anyone's books open.
+const MIN_BOOKABLE_SHIFT_HOURS = 3.5;
+const isBookable = shift => wiw.shiftHours(shift) >= MIN_BOOKABLE_SHIFT_HOURS;
+
 function daysOut(shiftDateKey) {
   return (new Date(`${shiftDateKey}T00:00:00Z`) - new Date(`${wiw.todayKey()}T00:00:00Z`)) / 86400000;
 }
@@ -69,10 +76,15 @@ async function processTrade({ droppingUserId, pickingUserId, shift, userCache })
   const shiftDisplay = `${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}`;
   const hours        = wiw.shiftHours(shift);
 
-  const [droppingShiftsToday, pickingShiftsToday] = await Promise.all([
+  if (!isBookable(shift)) {
+    console.log(`  Shift ${shift.id}: ${droppingName} → ${pickingName}, ${shiftDisplay} is only ${hours} hrs — treating as a training, no task`);
+    return;
+  }
+
+  const [droppingShiftsToday, pickingShiftsToday] = (await Promise.all([
     wiw.getUserShiftsOnDate(droppingUserId, shiftDate),
     wiw.getUserShiftsOnDate(pickingUserId,  shiftDate),
-  ]);
+  ])).map(list => list.filter(isBookable));
   const droppingHasRemainingShift = droppingShiftsToday.length > 0;
   const pickingIsBackToBack       = pickingShiftsToday.length >= 2;
   const isUrgent                  = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
@@ -124,7 +136,12 @@ async function processPickup({ shift, userCache }) {
   const shiftDisplay = `${wiw.formatShiftDate(shift)} ${wiw.formatShiftTime(shift)}`;
   const hours        = wiw.shiftHours(shift);
 
-  const shiftsToday  = await wiw.getUserShiftsOnDate(shift.user_id, shiftDate);
+  if (!isBookable(shift)) {
+    console.log(`  Shift ${shift.id}: ${name}, ${shiftDisplay} is only ${hours} hrs — treating as a training, no task`);
+    return;
+  }
+
+  const shiftsToday  = (await wiw.getUserShiftsOnDate(shift.user_id, shiftDate)).filter(isBookable);
   const isBackToBack = shiftsToday.length >= 2;
   const isUrgent     = (new Date(shift.start_time) - Date.now()) < 24 * 60 * 60 * 1000;
   const assigneeGid  = pickAssignee(isUrgent);

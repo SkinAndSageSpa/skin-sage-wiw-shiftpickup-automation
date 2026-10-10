@@ -16,6 +16,12 @@ function droppingHasRemainingShift(remainingShifts) {
   return remainingShifts.length > 0;
 }
 
+// Mirrors handler.js: shifts under 3.5h are trainings — no task.
+const MIN_BOOKABLE_SHIFT_HOURS = 3.5;
+function isBookable(hours) {
+  return hours >= MIN_BOOKABLE_SHIFT_HOURS;
+}
+
 const BATCH_SIZE_THRESHOLD = 8;
 const BATCH_MIN_DAYS_OUT   = 18;
 
@@ -46,6 +52,12 @@ describe('isBackToBack', () => {
 describe('droppingHasRemainingShift', () => {
   it('true when remaining shift exists', () => assert.ok(droppingHasRemainingShift([{}])));
   it('false when no remaining shifts', () => assert.ok(!droppingHasRemainingShift([])));
+});
+
+describe('isBookable', () => {
+  it('standard 3.75h shift is bookable', () => assert.ok(isBookable(3.75)));
+  it('exactly 3.5h is bookable', () => assert.ok(isBookable(3.5)));
+  it('1h training is not bookable', () => assert.ok(!isBookable(1)));
 });
 
 describe('shouldSuppressAsRoutinePublish', () => {
