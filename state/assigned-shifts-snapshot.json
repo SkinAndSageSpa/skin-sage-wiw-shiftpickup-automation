@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-12T02:06:10.891Z",
+  "capturedAt": "2026-10-12T10:19:23.161Z",
   "assigned": {
     "3854989811": {
       "userId": 52268300,
@@ -497,69 +497,6 @@
       "startTime": "Tue, 13 Oct 2026 13:00:00 -0700",
       "endTime": "Tue, 13 Oct 2026 16:45:00 -0700",
       "positionId": 11742908
-    },
-    "3856168131": {
-      "userId": 52119777,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3856168136": {
-      "userId": 53109620,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3856168140": {
-      "userId": 52119789,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3856168145": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3856168153": {
-      "userId": 52125746,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 16:45:00 -0700",
-      "positionId": 11742906
-    },
-    "3856168157": {
-      "userId": 53109620,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 09:15:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3856168161": {
-      "userId": 52119789,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 09:15:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3856168171": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 09:15:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3856168181": {
-      "userId": 52119777,
-      "shiftDate": "2026-10-11",
-      "startTime": "Sun, 11 Oct 2026 09:15:00 -0700",
-      "endTime": "Sun, 11 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
     },
     "3859102234": {
       "userId": 52576877,
