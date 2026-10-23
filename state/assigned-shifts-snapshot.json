@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-23T13:07:02.477Z",
+  "capturedAt": "2026-10-23T18:06:55.064Z",
   "assigned": {
     "3859102237": {
       "userId": 53361040,
@@ -350,13 +350,6 @@
       "startTime": "Sun, 01 Nov 2026 13:00:00 -0800",
       "endTime": "Sun, 01 Nov 2026 16:45:00 -0800",
       "positionId": 11742908
-    },
-    "3863243471": {
-      "userId": 53109620,
-      "shiftDate": "2026-10-30",
-      "startTime": "Fri, 30 Oct 2026 09:15:00 -0700",
-      "endTime": "Fri, 30 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
     },
     "3863243473": {
       "userId": 53109620,
@@ -762,6 +755,13 @@
       "shiftDate": "2026-11-05",
       "startTime": "Thu, 05 Nov 2026 13:00:00 -0800",
       "endTime": "Thu, 05 Nov 2026 16:45:00 -0800",
+      "positionId": 11742908
+    },
+    "3867241133": {
+      "userId": 53689628,
+      "shiftDate": "2026-11-03",
+      "startTime": "Tue, 03 Nov 2026 13:00:00 -0800",
+      "endTime": "Tue, 03 Nov 2026 16:45:00 -0800",
       "positionId": 11742908
     },
     "3867241136": {
@@ -1296,6 +1296,13 @@
       "endTime": "Thu, 12 Nov 2026 16:45:00 -0800",
       "positionId": 11742908
     },
+    "3870865481": {
+      "userId": 53689628,
+      "shiftDate": "2026-11-10",
+      "startTime": "Tue, 10 Nov 2026 13:00:00 -0800",
+      "endTime": "Tue, 10 Nov 2026 16:45:00 -0800",
+      "positionId": 11742908
+    },
     "3870865484": {
       "userId": 52576868,
       "shiftDate": "2026-11-12",
@@ -1350,6 +1357,13 @@
       "shiftDate": "2026-11-14",
       "startTime": "Sat, 14 Nov 2026 09:15:00 -0800",
       "endTime": "Sat, 14 Nov 2026 13:00:00 -0800",
+      "positionId": 11742908
+    },
+    "3870865499": {
+      "userId": 52119785,
+      "shiftDate": "2026-11-12",
+      "startTime": "Thu, 12 Nov 2026 09:15:00 -0800",
+      "endTime": "Thu, 12 Nov 2026 13:00:00 -0800",
       "positionId": 11742908
     },
     "3870865500": {
@@ -1994,6 +2008,13 @@
       "shiftDate": "2026-11-19",
       "startTime": "Thu, 19 Nov 2026 13:00:00 -0800",
       "endTime": "Thu, 19 Nov 2026 16:45:00 -0800",
+      "positionId": 11742908
+    },
+    "3874715822": {
+      "userId": 53689628,
+      "shiftDate": "2026-11-17",
+      "startTime": "Tue, 17 Nov 2026 13:00:00 -0800",
+      "endTime": "Tue, 17 Nov 2026 16:45:00 -0800",
       "positionId": 11742908
     },
     "3874715824": {
