@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-25T05:44:56.757Z",
+  "capturedAt": "2026-10-25T10:51:27.210Z",
   "assigned": {
     "3859102256": {
       "userId": 52932012,
@@ -69,48 +69,6 @@
       "shiftDate": "2026-10-25",
       "startTime": "Sun, 25 Oct 2026 09:15:00 -0700",
       "endTime": "Sun, 25 Oct 2026 13:00:00 -0700",
-      "positionId": 11742907
-    },
-    "3859102307": {
-      "userId": 52950127,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3859102310": {
-      "userId": 52119785,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3859102313": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "positionId": 11742908
-    },
-    "3859102320": {
-      "userId": 52268300,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "positionId": 11742907
-    },
-    "3859102333": {
-      "userId": 53361040,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "positionId": 11742908
-    },
-    "3859102336": {
-      "userId": 52268300,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 09:15:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 13:00:00 -0700",
       "positionId": 11742907
     },
     "3863243441": {
@@ -1128,34 +1086,6 @@
       "endTime": "Wed, 04 Nov 2026 20:30:00 -0800",
       "positionId": 11742907
     },
-    "3869154050": {
-      "userId": 52119777,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 17:45:00 -0700",
-      "positionId": 0
-    },
-    "3869154057": {
-      "userId": 52804757,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 17:45:00 -0700",
-      "positionId": 0
-    },
-    "3869154191": {
-      "userId": 52950127,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 17:45:00 -0700",
-      "positionId": 0
-    },
-    "3869154210": {
-      "userId": 52268300,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 17:45:00 -0700",
-      "positionId": 0
-    },
     "3870865453": {
       "userId": 52119789,
       "shiftDate": "2026-11-15",
@@ -1701,13 +1631,6 @@
       "startTime": "Wed, 11 Nov 2026 16:45:00 -0800",
       "endTime": "Wed, 11 Nov 2026 20:30:00 -0800",
       "positionId": 11742907
-    },
-    "3871686561": {
-      "userId": 53667920,
-      "shiftDate": "2026-10-24",
-      "startTime": "Sat, 24 Oct 2026 13:00:00 -0700",
-      "endTime": "Sat, 24 Oct 2026 16:45:00 -0700",
-      "positionId": 0
     },
     "3871686693": {
       "userId": 53667920,
