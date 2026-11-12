@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-11-12T15:00:57.759Z",
+  "capturedAt": "2026-11-12T22:03:33.828Z",
   "assigned": {
     "3870865453": {
       "userId": 52119789,
@@ -275,14 +275,14 @@
       "positionId": 11742907
     },
     "3870866123": {
-      "userId": 53109620,
+      "userId": 53681547,
       "shiftDate": "2026-11-12",
       "startTime": "Thu, 12 Nov 2026 16:45:00 -0800",
       "endTime": "Thu, 12 Nov 2026 20:30:00 -0800",
       "positionId": 11742907
     },
     "3870866125": {
-      "userId": 53109620,
+      "userId": 53681547,
       "shiftDate": "2026-11-12",
       "startTime": "Thu, 12 Nov 2026 13:00:00 -0800",
       "endTime": "Thu, 12 Nov 2026 16:45:00 -0800",
